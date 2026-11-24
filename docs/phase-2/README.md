@@ -19,7 +19,7 @@ Phase 2 is strictly organized into eight modular, sequentially reviewed parts:
 | **Part 2.3** | **Piece Lifecycle State Machine** | Piece creation, readiness gates, operation progression, QC decisions, rework, scrap, replacement linkage, set aggregation | **Completed (Approved)** |
 | **Part 2.4** | **Operation Lifecycle State Machine** | Operation lifecycle (Ready, Opened, QC Pending, QC in Progress, Passed, Failed, Concession, Bypassed, Cancelled), operator grid, QC & PM controls | **Completed (Approved)** |
 | **Part 2.5** | **QC & Exception State Machines** | Dual operator/QC measurements, static & dynamic tolerances, PM decisions, extra process, restart, RM & ECR outbox lifecycle | **Completed (Approved)** |
-| **Part 2.6** | **SC & Completion State Machine** | SC intake, revision handling, piece completion, BOM completion, packing, dispatch gating, delivered status | *Pending* |
+| **Part 2.6** | **SC & Completion State Machine** | SC intake, revision handling, piece completion, BOM completion, packing, dispatch gating, delivered status | **Completed (Awaiting Review)** |
 | **Part 2.7** | **Integration Architecture** | RM read-only connector, service-account security, outbox pattern for ECR, idempotency, vendor DC sync | *Pending* |
 | **Part 2.8** | **Architecture Review & Sign-Off** | Comprehensive traceability matrix against Phase 1, conflict resolution, diagram verification, final sign-off | *Pending* |
 
@@ -108,10 +108,16 @@ docs/phase-2/
 │   ├── 03-operation-state-machine-diagrams.md          <-- 9 Mermaid diagrams (state, flows, QC, PM controls)
 │   ├── 04-operator-execution-qc-and-pm-dispositions.md <-- Operator grid, QC lifecycle & 4 PM dispositions
 │   └── 05-operation-controls-timing-and-traceability.md<-- PM controls, lead times, concurrency & Phase 1 matrix
-└── 2.5-qc-and-exception-state-machines/
-    ├── 01-qc-and-exception-overview-and-states.md       <-- Four sub-domain state catalogues & lifecycle principles
-    ├── 02-qc-inspection-state-machine-and-tolerances.md <-- Tolerances, independent QC state machine & instruments
-    ├── 03-exception-lifecycle-and-pm-dispositions.md    <-- Non-conformance lifecycle & 4 PM dispositions
-    ├── 04-ecr-outbox-integration-state-machine.md       <-- RM & ECR boundaries, transactional outbox & retry backoff
-    └── 05-qc-exception-diagrams-and-traceability.md     <-- 6 Mermaid diagrams, Phase 1 matrix & open questions
+├── 2.5-qc-and-exception-state-machines/
+│   ├── 01-qc-and-exception-overview-and-states.md       <-- Four sub-domain state catalogues & lifecycle principles
+│   ├── 02-qc-inspection-state-machine-and-tolerances.md <-- Tolerances, independent QC state machine & instruments
+│   ├── 03-exception-lifecycle-and-pm-dispositions.md    <-- Non-conformance lifecycle & 4 PM dispositions
+│   ├── 04-ecr-outbox-integration-state-machine.md       <-- RM & ECR boundaries, transactional outbox & retry backoff
+│   └── 05-qc-exception-diagrams-and-traceability.md     <-- 6 Mermaid diagrams, Phase 1 matrix & open questions
+└── 2.6-sc-and-completion-state-machine/
+    ├── 01-sc-lifecycle-overview-and-states.md           <-- Intake channels, hierarchy & exhaustive 7-state catalogue
+    ├── 02-sc-set-and-component-completion-rules.md      <-- Configurable BOM engine, piece metrics & 7-level completion
+    ├── 03-packing-and-dispatch-state-machines.md        <-- Set lifecycle, packing verification & dock dispatch release
+    ├── 04-completion-calculation-and-transition-matrices.md <-- Algorithms, 4 transition matrices & concurrency locks
+    └── 05-sc-completion-diagrams-and-traceability.md     <-- 6 Mermaid models, traceability matrix & open questions
 ```
