@@ -1,97 +1,71 @@
 # 09 — Integration Specification
 
-**Important:** The requirement PDF lists proposed business fields, not a verified live API contract. The latest business instruction is to use exact field names. Therefore, external property names, casing, data types and endpoint paths must be copied from the actual RM/ECR contract when provided; do not invent or rename them in the integration adapter.
+Updated 2026-11-24 — decisions D-01 to D-19 (see 00_DECISION_LOG.md)
 
-## 1. Systems and ownership
-- RM V-SMART: source of SC/requisition, BOM/material and vendor DC/inward facts.
-- Velan Production: production workflow, quantity lineage, measurements, QC, rework, vendor-operation monitoring, packing and dispatch.
-- ECR: responsibility/costing workflow for applicable exceptions.
+**Notice:** The audits of the live RM and ECR code (2026-11-24) provide real endpoint and database entity names. JSON property names in API responses (which may differ from database column names) must be confirmed by calling the live endpoints as the first task of phase 13; mark them "VERIFY" until then.
 
-## 2. Integration event catalogue
-| ID | Source → Destination | Trigger | Expected result |
+## 1. Approach (D-11, pending OPEN — BUSINESS DECISION REQUIRED: O-04)
+- RM is read-only. Production polls RM's existing read APIs with a read-only service account, plus a "refresh now" action. No RM code change.
+- ECR receives exceptions through its existing intake. No ECR code change.
+- Production never sends anything to RM. (D-09, BR-067)
+- Integration is built in the flow, not at the end: RM connector (phase 13), ECR sender (phase 14), SC intake from RM (phase 18), material gate (phase 22), ECR sending (phase 31), replacement release (phase 32), vendor from RM (phase 35), reconciliation (phase 42).
+
+## 2. Data flows (replaces the event catalogue)
+| ID | Flow | Direction | Mechanism |
 |---|---|---|---|
-| INT-001 | RM → Production | SC/requisition submitted | Create/refresh production record and hierarchy |
-| INT-002 | RM → Production | Material issue/status updated | Update required/issued/pending/shortage and issue timing |
-| INT-003 | Production → RM | Applicable rejection recorded | Send exception reference/details |
-| INT-004 | Production → RM | Applicable rework recorded | Send exception reference/details |
-| INT-005 | Production → RM | Additional process recorded | Send process reference/details |
-| INT-006 | Production → ECR | Applicable rejection recorded | Create/link ECR issue |
-| INT-007 | Production → ECR | Applicable rework recorded | Create/link ECR issue |
-| INT-008 | Production → ECR | Additional process where applicable | Send agreed exception details |
-| INT-009 | RM → Production | Vendor inward/return recorded | Automatically notify Production and expose returned quantity for QC entry |
+| INT-001 | SC, PO, customer, product lines and quantities | RM → Production | Poll; idempotent upsert; revisions by diff |
+| INT-002 | Material issued yes/no per product | RM → Production | Poll material issues |
+| INT-009 | Vendor DC details and return status | RM → Production | Poll DCs |
+| INT-010 | ECR material issued (for replacement release) | RM → Production | Poll ECR issues |
+| INT-006/007/008 | REJECTION, REWORK, ADDITIONAL_PROCESS exceptions | Production → ECR | Outbox; HTTP POST once |
+| INT-003/004/005 | Exceptions to RM | — | **Removed** (D-09) |
 
-No ECR costing/responsibility result returns to Production under current confirmed scope.
+## 3. RM read endpoints (all need a JWT; use a service account)
+`GET /api/sc`, `/api/sc/:id`, `/api/sc/traceability/:poNumber`, `/api/rm`, `/api/rm/:id`, `/api/rm/stores/queue`, `/api/material-issues`, `/api/material-issues/:id`, `/api/production/receipts`, `/api/delivery-challans`, `/api/delivery-challans/:id`, `/api/delivery-challans/movements`, `/api/ecr-issues` (Stores/Production/Admin roles).
 
-## 3. RM → Production: SC intake
-### Trigger
-RM successfully submits an SC/requisition.
+## 4. RM field mapping (database names from the audit; API property names: VERIFY)
+| RM source | RM field | Production field | Note |
+|---|---|---|---|
+| `sales_order_components` | `id`, `sc_number`, `po_id`, `product_name`, `target_quantity`, `status`, `drawing_number` | `sc.external_ref`, `sc.sc_number`, … | `status` (VERIFY): DRAFT, SUBMITTED, STORES_PENDING, PARTIALLY_ISSUED, ISSUED, IN_PRODUCTION, ADDITIONAL_REQUEST, COMPLETED, CLOSED, REJECTED. Only intake when submitted. |
+| `purchase_orders` | `po_number`, `reference_date`, `external_reference`, `customer_id` | `sc.po_number`, optional due date | `reference_date` as delivery date is OPEN — BUSINESS DECISION REQUIRED: O-01. (VERIFY) |
+| `customers` | `code`, `name` | `sc.customer` | (VERIFY) |
+| `rm_requests` | `id`, `sc_id`, `status`, `revision_number`, `submitted_at` | revision tracking | RmRequestStatus (VERIFY): DRAFT, SUBMITTED, REVIEWED, COMPLETED, REJECTED. |
+| `rm_items` (one per product, D-02) | `id`, `part_name`, `part_number`, `material`, `material_type`, `grade`, `size`, `quantity`, `weight_unit` | `sc_product.external_ref`, name, quantity | `quantity` = piece count. Lines can be edited by Admin or hard-deleted after submit: the sync must diff every poll. (VERIFY) |
+| `material_issue_items` | `rm_item_id`, `quantity_issued` | `sc_product.material_issued` | Issued = sum(quantity_issued) per `rm_item_id`; issued yes/no rule to be fixed in phase 22 (assumed: any issue = yes; OPEN — BUSINESS DECISION REQUIRED: O-10). (VERIFY) |
+| `delivery_challans` | `id`, `challan_number`, `type`, `status`, `vendor_id`, `process_name`, `sc_id` | `vendor_batch` | Read only `type = PRODUCTION_PROCESS_OUTWARD`. Number format `SDC/YYYY/####`. (VERIFY) |
+| `delivery_challan_items` | `id`, `part_name`, `quantity_dispatched`, `actual_received_qty` | `vendor_batch` quantities | **No `rm_item_id`**: match by SC + `part_name`; unmatched lines go to a manual "map this line" screen. `part_number` is overwritten with the SC code, so never match on it. (VERIFY) |
+| Return status | derived | received / partial / not received | `actual_received_qty` = 0 → not received; < dispatched → partial; ≥ dispatched → received. Do **not** use the DC `status` (after dock receipt it is always PARTIALLY_RETURNED until RM's QC closes it). |
+| `ecr_material_pending` | `ecr_id`, `report_number`, `type`, `sc_number`, `component`, `quantity_affected`, `status`, `issued_at` | replacement release | `status` (VERIFY): PENDING, ISSUED. Match `report_number` with the stored ECR report number. |
 
-### Business data needed
-- RM requisition/SC unique identifier.
-- PO reference and customer reference/name where available.
-- SC number, creation/submission date and status.
-- Product/main product and component/sub-product identifiers and names.
-- Set target quantity and component/BOM quantities.
-- BOM and material identifiers, descriptions, required quantities and units where available.
-- Delivery date where available.
-- Source revision/update reference.
+## 5. Production → ECR
+- `POST {ECR_API_URL}/api/internal/rm-intake`, header `x-internal-secret` (value from the Render environment, never in code or logs).
+- Request fields: `type` (REWORK or REJECTION), `scNumber`*, `poNumber`*, `component`*, `quantityAffected`* (integer ≥ 1), `defectDescription`*, `raisedByName`*, and optional `stageOfFailure`, `errorType`, `operatorName` (not persisted by ECR), `reworkDescription`, `rejectionDescription`, `rejectionProcessTemplate`, `rejectionFailedStage`, `rejectionStageCosts`, `costEstimation`, `lossEstimation`, `alternativeNotes`. (* required)
+- ADDITIONAL_PROCESS is sent as REWORK with the text "[ADDITIONAL PROCESS]" at the start of `defectDescription` (OPEN — BUSINESS DECISION REQUIRED: O-04).
+- Put the Production exception id in `defectDescription` (for example "Ref PRD-EXC-000123") so a report can be matched manually.
+- Response `{reportId, reportNumber}`; store `reportNumber` on the exception. ECR creates the report in status PENDING_ACCOUNTS_REVIEW.
+- **Idempotency:** ECR only has a 10-minute in-memory duplicate cache. The Production outbox sends once (PENDING → SENDING → SENT) and never auto-resends after an ambiguous timeout; it flags the item for Admin to check ECR. (BR-062)
+- `poNumber` is required by ECR, so Production must hold the PO number on every SC (manual and Excel entry included).
 
-### Processing rules
-1. Authenticate the RM source.
-2. Validate required source identity and payload structure.
-3. Deduplicate by stable RM SC/requisition/event identifier.
-4. Persist inbound event before business processing.
-5. Create/update production hierarchy transactionally.
-6. Acknowledge success/failure with correlation reference.
-7. Preserve original external identifiers and exact payload/property names in integration logs.
-8. Notify Admin and PM when SC synchronization fails.
+## 6. Reliability and security (replaces §8)
+- Sync log table per poll: started, finished, counts, errors; idempotent upserts by RM ids.
+- Retry with bounded backoff; alert Admin and PM after repeated failures; "refresh now" for users with permission.
+- Read-only service account for RM; secrets in environment variables; never log tokens or secrets.
+- Reconciliation screen (phase 42): SCs missing in either side, quantity mismatches, unsent or ambiguous ECR exceptions.
 
-## 4. RM → Production: material issue
-### Trigger
-Stores records issue or issue update in RM.
+## 7. Exact field checklist (replaces §9)
+| Source System | External Property Name | Casing | Type | Required | Nullable | Unit | Destination Field | Status |
+|---|---|---|---|---|---|---|---|---|
+| RM API | VERIFY in phase 13 | VERIFY | string/number | Yes | No | — | `sc.external_ref` | VERIFY |
+| RM API | VERIFY in phase 13 | VERIFY | string | Yes | No | — | `sc.sc_number` | VERIFY |
+| RM API | VERIFY in phase 13 | VERIFY | string | Yes | No | — | `sc.po_number` | VERIFY |
+| RM API | VERIFY in phase 13 | VERIFY | number | Yes | No | — | `sc_product.quantity` | VERIFY |
+| ECR API | `scNumber` | camelCase | string | Yes | No | — | Inbound from Prod | Confirmed |
+| ECR API | `poNumber` | camelCase | string | Yes | No | — | Inbound from Prod | Confirmed |
+| ECR API | `component` | camelCase | string | Yes | No | — | Inbound from Prod | Confirmed |
+| ECR API | `quantityAffected` | camelCase | integer | Yes | No | — | Inbound from Prod | Confirmed |
+| ECR API | `defectDescription` | camelCase | string | Yes | No | — | Inbound from Prod | Confirmed |
+| ECR API | `raisedByName` | camelCase | string | Yes | No | — | Inbound from Prod | Confirmed |
+*(Checklist values marked VERIFY must be confirmed against live responses during phase 13).*
 
-### Data required
-RM requisition/SC reference, material code/ID, required quantity, issued quantity, pending quantity if supplied, issue status, RM transaction reference, issue date/time, Store reference if supplied.
-
-### Production behaviour
-- Update material visibility and last-source-update time.
-- Calculate readiness only from source data and configured operation requirement.
-- Block material-dependent operation data entry until required issue condition is met.
-- Never create or mutate RM stock transactions.
-
-## 5. RM → Production: vendor inward
-### Trigger
-RM records vendor return/inward.
-
-### Data required
-RM DC reference, SC/requisition reference, vendor reference, operation/product/component reference where available, dispatched/returned/pending quantities, inward date/time, status and event identifier.
-
-### Production behaviour
-- Automatically notify Production on RM inward event.
-- Update vendor-returned and vendor-pending quantity.
-- Make only RM-confirmed returned quantity available for internal QC.
-- Production QC user independently enters QC measurements.
-- Partial inward leaves unreturned balance vendor-pending.
-
-## 6. Production → RM: exception information
-Trigger only for applicable rejection, rework or additional-process records. Proposed business mapping includes Production record ID, RM requisition ID, SC, product/component, operation, unique exception ID, exception type, affected quantity, reason, QC reference, actor and timestamp. Exact RM field names and payload must be confirmed against RM's actual interface. RM acknowledges and handles its own material/stock responsibilities.
-
-## 7. Production → ECR: exception information
-Send only the relevant data needed for ECR to create/link its own record: source references, SC, product/component, operation, unique exception ID, exception type, affected quantity, relevant measurements/tolerance revision if agreed, QC reference, reason, supporting document references, actor and timestamp. ECR performs responsibility and costing independently. Production does not calculate, overwrite or consume ECR costing results.
-
-## 8. Reliability and security
-- Use authenticated service-to-service communication.
-- Use stable event IDs and idempotency keys.
-- Store inbound/outbound events durably.
-- Retry transient failures with bounded backoff; expose exhausted failures for Admin/PM review.
-- Return acknowledgements and record them.
-- Maintain correlation IDs across RM, Production and ECR.
-- Validate schema/version, source identity, quantities and references.
-- Reconcile source and receiver records periodically or through an authorized reconciliation tool.
-- Never log credentials, tokens or secrets.
-
-## 9. Exact field mapping checklist
-For every integration field, document: source system, exact external property name, exact casing, type, required/optional, nullability, unit, example (non-sensitive), destination field, transformation (if any), validation, event, owner and version. Until the RM/ECR contract is inspected, mark external names **TBD — do not guess**.
-
-## 10. Explicitly excluded integrations
-No Production stock issue/return/additional request; no Production Vendor DC creation/receipt; no ECR cost return; no billing exchange; no MERC; no Velan Dashboard.
+## 8. Excluded (replaces §10)
+No Production-to-RM messages, no stock or DC transactions, no ECR cost return, no billing, no MERC/Velan Dashboard integration now (read later, D-12).
