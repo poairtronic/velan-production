@@ -1,32 +1,41 @@
 # 06 — Role Matrix
 
-## 1. Confirmed primary roles
-Admin, PM, Operator, QC and Management. The application should support dynamic RBAC and Admin-created custom roles where needed. The matrix below defines business responsibility; final action grants are configured in the application.
+Updated 2026-11-24 — decisions D-01 to D-19 (see 00_DECISION_LOG.md)
 
-| Module/action | Admin | PM | Operator | QC | Management |
-|---|---|---|---|---|---|
-| View application-wide data | Yes | Production scope | Assigned/permitted scope | QC scope | Dashboard/report scope |
-| User lifecycle | Full | No by default | No | No | No |
-| Create custom roles/permissions | Yes | No by default | No | No | No |
-| Manage notification settings for users | Yes | No | No | No | No |
-| Cancel/delete records | Yes only | No by default | No | No | No |
-| View RM SC intake/status | Yes | Yes | Assigned scope | QC scope | Dashboard scope |
-| Process planning/priority | Permission-based | Yes | View assigned | View relevant | View permitted |
-| Assign/reassign work | Permission-based | Yes | No | No | No by default |
-| Manage process templates | Permission-based | Yes if granted | No | No | No |
-| Upload/review tolerance sheet | Permission-based | Approve | View active values | View active values | View/report |
-| Approve tolerance revision | Permission-based | Yes | No | No | No by default |
-| Enter operator measurements | No by default | No | Yes | No | No |
-| Enter QC measurements/decision | No by default | No | No | Yes | No |
-| QC failure disposition/rework routing | Permission-based | Yes | No | Request/record QC finding | No by default |
-| Override approval | Admin if granted | Yes if granted | No | Request only | No unless explicitly granted |
-| Vendor tracking | Permission-based | Yes | Work-route view | QC/return inspection | Dashboard view |
-| Material issue transactions | No in Production | No in Production | No | No | No |
-| View RM material status | Yes | Yes | Relevant operation | Relevant inspection | Dashboard |
-| Packing confirmation | Permission-based | Monitor/permission | If assigned permission | If assigned permission | View |
-| Dispatch confirmation | Permission-based | Monitor/permission | If assigned permission | No | View |
-| Dashboards/reports | All permitted | Production/team | Own | QC/team | Management scope |
-| View security/admin logs | Yes | No | No | No | No |
+## 1. Confirmed primary roles
+Confirmed primary roles: **Admin, PM, Designer, Operator, QC, Management**. (D-03)
+The application supports dynamic RBAC and Admin-created custom roles where needed. Individual login per employee. The matrix below defines business responsibility; final action grants are configured in the application.
+
+| Module/action | Admin | PM | Designer | Operator | QC | Management |
+|---|---|---|---|---|---|---|
+| View application-wide data | Yes | Production scope | Design/SC scope | Assigned/permitted scope | QC scope | Dashboard/report scope |
+| User lifecycle (individual login) | Full | No by default | No | No | No | No |
+| Create custom roles/permissions | Yes | No by default | No | No | No | No |
+| Manage notification settings for users | Yes | No | No | No | No | No |
+| Cancel/delete records | Yes only | No by default | No | No | No | No |
+| Enter SC manually / Excel import | Yes | Yes | Yes | No | No | No |
+| Import in-progress SC from RM | Yes | Yes | No | No | No | No |
+| View RM SC intake/status | Yes | Yes | Yes | Assigned scope | QC scope | Dashboard scope |
+| View integration/sync status | Yes | Yes | No | No | No | No |
+| Set material-issued flag (manual) | Yes | Yes | No | No | No | No |
+| Release replacement piece (manual) | Permission-based | Yes | No | No | No | No |
+| Process planning / daily priority list | Permission-based | Yes | No | View assigned queue | View relevant | View permitted |
+| Assign/reassign work | Permission-based | Yes | No | No | No | No by default |
+| Select process flow per product | Permission-based | Yes | Yes | No | No | No |
+| Manage process templates | Admin (O-12) | PM if granted (O-12) | View only | No | No | No |
+| Upload drawing / tolerance sheet | Permission-based | Review | Yes | View active values | View active values | View/report |
+| Verify tolerance extraction | Permission-based | Review | Yes | No | No | No |
+| Approve tolerance revision | Permission-based | Yes | No | No | No | No by default |
+| Enter operator measurements | No by default | No | No | Yes (bulk grid) | No | No |
+| Enter QC measurements | No by default | No | No | No | Yes | No |
+| QC flag / failure disposition | Permission-based | Decides (4 outcomes) | No | No | Flags finding | No by default |
+| Vendor tracking (read RM DC details) | Permission-based | Yes | View | Tag returned pieces | Inspect return | Dashboard view |
+| Material issue transactions | No in Production | No in Production | No | No | No | No |
+| View RM material status | Yes | Yes | View | Blocked if not issued | Inspection scope | Dashboard |
+| Dashboards/reports & 9 AM report | All permitted | Production/team | Design scope | Own | QC/team | Management scope |
+| View security/admin logs | Yes | No | No | No | No | No |
+
+*(Note: Rows for Override approval, Packing confirmation, and Dispatch confirmation are removed per D-07 and D-10.)*
 
 ## 2. RBAC evaluation rules
 1. Admin creates roles and grants module/action permissions.
@@ -43,9 +52,10 @@ When Admin suspends an employee with active work: block access as configured; no
 
 ## 4. Approval authority
 - PM or Admin may provide final business acceptance.
-- PM is the business owner for production scheduling, QC failure disposition, tolerance revision approval and production exceptions, subject to configured permissions.
+- PM is the business owner for production scheduling, QC failure disposition (CONTINUE with reason, EXTRA PROCESS, RETURN TO EARLIER OP, REJECT AND RESTART), tolerance revision approval and production exceptions, subject to configured permissions.
+- PM decides flagged pieces; a continue decision requires a mandatory reason. (D-07)
 - Admin retains user/permission governance and Admin-only cancellation/deletion.
-- QC records inspection results but does not approve its own out-of-tolerance override unless separately authorized; original measurement remains unchanged.
+- QC records inspection results independently on every operation; original measurements remain unchanged.
 
 ## 5. Role naming note
-Earlier drafts included Design, Department Head, Stores, Vendor Coordinator, Packing and Dispatch as separate roles. The latest confirmed primary structure is the five roles above. Those functions can be represented as permission sets/custom roles or assigned responsibilities without silently adding primary role groups.
+Design is a primary role (Designer). Stores, Packing, Dispatch, Vendor Coordinator and Department Head are not roles; Stores actions stay in RM. (D-03)
