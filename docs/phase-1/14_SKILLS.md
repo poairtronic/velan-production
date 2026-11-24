@@ -1,58 +1,61 @@
 # Velan Production — Agent Skills and Repository Instructions
 
-This file is a project-level instruction set for coding agents working on Velan Production. It is newly drafted from the business requirements; it is not a recovered repository-specific `skills.md`. Adapt paths and commands to the actual repository after inspection.
+Updated 2026-11-24 — decisions D-01 to D-19 (see 00_DECISION_LOG.md)
+
+This file is a project-level instruction set for coding agents working on Velan Production. Adapt paths and commands to the actual repository after inspection.
 
 ## 1. Mission and scope
-Build and maintain Velan Production as a manufacturing execution and traceability application. The application begins with RM V-SMART SC/requisition intake and ends with actual dispatch confirmation. Do not implement AI Agent/Velan AI, billing, inventory transactions, Vendor DC transactions, MERC integration or Velan Dashboard integration.
+Build and maintain Velan Production as a manufacturing execution and traceability application. The application begins with RM V-SMART SC/requisition intake (plus permanent manual entry and Excel import) and ends when the SC is Delivered automatically. (D-10) Do not modify the RM or ECR code bases. Do not implement AI Agent/Velan AI, billing, inventory transactions, Vendor DC transactions, MERC integration or Velan Dashboard integration.
 
 ## 2. Source-of-truth hierarchy
 When instructions conflict, apply this order:
-1. Latest explicit business-owner clarification.
-2. Approved Phase 1 documents.
-3. Revised requirement analysis source document.
-4. Older drafts and proposed technical recommendations.
-5. Agent assumptions (never silently promote assumptions to requirements).
+1. `00_DECISION_LOG.md` (decisions D-01 to D-19).
+2. Latest explicit business-owner clarification.
+3. Approved Phase 1 documents.
+4. Revised requirement analysis source document.
+5. Older drafts and proposed technical recommendations.
+6. Agent assumptions (never silently promote assumptions to requirements).
 
-Mark unresolved points as `OPEN — BUSINESS DECISION REQUIRED`.
+Mark unresolved points as `OPEN — BUSINESS DECISION REQUIRED` (with their O-xx IDs).
 
 ## 3. Non-negotiable business rules
-- RM owns SC/requisition source, stock, material issue/return/additional requests and Vendor DC transactions.
-- ECR owns responsibility and costing; do not return ECR costing to Production.
-- Preserve PO → SC → manufactured product → sub-product/BOM → set → component lineage.
-- A set completes only when every required BOM component for that set completes required operations and QC.
-- Partial dispatch means selected complete sets only; never dispatch an incomplete BOM set.
-- Packing confirmation means Dispatch Pending. Only actual dispatch confirmation means Delivered.
-- Operator work/data entry is blocked until RM confirms material issue readiness for material-dependent operations.
-- Operator measurements and QC measurements are separate records.
-- QC failure notifies PM; PM controls disposition.
+- RM owns SC/requisition source, stock, material issue/return/additional requests and Vendor DC transactions. Production never writes to RM. (D-09, BR-067)
+- ECR owns responsibility and costing; do not return ECR costing to Production. Exceptions go to ECR only. (D-09)
+- Preserve PO → SC → product → piece lineage.
+- Product/SC completion is derived from individual piece completion (a piece is Packed when all operations pass; SC is Delivered automatically when all products are complete; no packing or dispatch screens; D-10). Set concept and partial dispatch of sets is OPEN — BUSINESS DECISION REQUIRED (O-03).
+- Operator work/data entry is blocked until material-issued flag is set per product (RM sync or PM/Admin manual flag; D-04).
+- Six confirmed primary roles: Admin, PM, Designer, Operator, QC, Management. (D-03)
+- Individual login per employee. (D-03)
+- Manual entry and Excel import stay permanent alongside RM sync. (D-01)
+- No QR codes or scanning in the baseline (operators pick pieces from queue; OPEN — BUSINESS DECISION REQUIRED: O-08).
+- Operator measurements and QC measurements are separate records; QC inspects every operation independently (blind QC). (D-06)
+- QC failure raises non-blocking alert; piece waits for PM; PM decides: CONTINUE with reason, EXTRA PROCESS, RETURN TO EARLIER OPERATION, REJECT AND RESTART. (D-07)
+- Reject and restart: scraps piece and creates a replacement piece with a new linked serial (`replaced_piece_id`) at operation 1; replacement is blocked until RM shows ECR material issued or PM releases it manually with a reason. (D-08, BR-061)
 - PM approval is required for tolerance revisions. Never overwrite existing measurements.
-- Restart routes affected quantity to the first operation of the applicable process while preserving history.
-- Additional process requires QC.
-- RM inward automatically notifies Production; Production user records QC measurements for confirmed returned quantity.
+- Production reads RM DC details and return status (received / partial / not received); no vendor dates; no alerts to RM. (D-05)
 - Only Admin manages notification settings for users and controls deletion/cancellation.
 - PM or Admin can provide final business acceptance.
 
 ## 4. Architecture discipline
-- Follow the approved architecture document. If no stack is frozen, treat `13_Tech_Stack.md` as a proposal, not an implementation mandate.
-- Prefer modular monolith boundaries initially.
+- Modular monolith architecture in Java 21 LTS + Spring Boot with React + TypeScript + Vite. (D-13)
+- No Redis (use in-process Caffeine cache); no RabbitMQ (use database outbox/sync log). (D-13)
 - Keep business logic in backend/domain services.
 - Keep external integration logic in dedicated adapters.
-- Keep database migrations versioned and forward-only unless a documented rollback plan exists.
+- Keep database migrations versioned (Flyway) and forward-only.
 - Use explicit DTOs and validation; do not expose persistence entities directly as API contracts.
-- Use transactions for quantity movement, QC release, dispatch and integration event processing.
+- Use transactions for piece status movement, outbox event generation, and integration processing.
 
 ## 5. Data integrity and traceability
-- Never delete or overwrite operator/QC measurements, tolerance revisions, approvals or historical quantity movements as a normal edit.
-- Every quantity transition must have source state, destination state, quantity, actor, timestamp and reason/reference as applicable.
-- Enforce quantity conservation and prevent duplicate or overlapping active quantities.
+- Never delete or overwrite operator/QC measurements, tolerance revisions, approvals or historical movements.
+- Derive counts from piece status; every piece is in exactly one status at any time; no manual quantity buckets. (BR-013, BR-068)
+- Replacement pieces get new serials linked to the scrapped parent via `replaced_piece_id`; never reuse or erase serials. (BR-012)
 - Preserve RM external IDs exactly; do not generate substitute source IDs.
-- Use stable internal IDs for sets/components and retain parent-child lineage.
-- Protect against concurrent operator submissions and duplicate QR scans.
+- Protect against concurrent operator submissions.
 
 ## 6. Integration rules
-- Inspect actual RM/ECR API docs and existing code before implementing.
-- Preserve exact external property names, casing and types in integration adapters.
-- Use idempotency keys, durable event inbox/outbox, acknowledgements, retries and integration history.
+- Use the read-only RM service account and existing RM read endpoints; use ECR's existing intake; verify JSON property names against live responses (VERIFY items in document 09). (D-11)
+- Never send anything to RM. (D-09, BR-067)
+- ECR outbox sends once (at-most-once delivery) and never auto-resends after an ambiguous timeout; flags for Admin manual review. (BR-062)
 - Never claim a vendor DC inward unless RM confirms it.
 - Never create a stock or DC transaction from Production.
 - Do not invent endpoints, payload fields, authentication schemes or webhook signatures.
@@ -63,31 +66,32 @@ Mark unresolved points as `OPEN — BUSINESS DECISION REQUIRED`.
 - Deny by default.
 - Apply individual Admin override before role evaluation; absent override, explicit role deny wins over role grant.
 - Do not rely on hidden buttons or client-side route guards.
-- Protect files by authorization checks and short-lived access mechanisms where appropriate.
-- Audit role changes, privileged actions, approvals, cancellation/deletion, overrides, quantity changes and integration administration.
+- Protect files by authorization checks and short-lived access mechanisms.
+- Audit role changes, privileged actions, approvals, cancellation/deletion, overrides, and integration administration.
 
 ## 8. UI and workflow expectations
-- Show PO/SC/product/BOM hierarchy consistently.
-- Use set/component identifiers in worklists and history.
-- Show material readiness and last RM issue time where available.
+- Show PO/SC/product/piece hierarchy consistently.
+- Use piece serials in worklists and history.
+- Show material readiness flag per product.
 - Show active tolerance revision and parameter units beside measurement inputs.
 - Make operator and QC entry screens visibly distinct.
-- Show quantity buckets and totals so users can reconcile physical units.
+- Operator entry is a bulk grid (rows = pieces, columns = parameters) with paste from Excel. (D-16)
+- No start/stop buttons; capture ready/opened/submitted timestamps. (D-16)
 - Display a clear block reason when work cannot proceed.
-- Packing and dispatch must be separate screens/actions/statuses.
+- No packing or dispatch screens. (D-10)
 
 ## 9. Testing requirements
 For each change, add/update:
-- Unit tests for business rules and quantity calculations.
+- Unit tests for business rules and piece status calculations.
 - Integration tests for repository transactions and external adapters.
-- Authorization tests for allowed and denied roles.
-- Negative tests for invalid state transitions and missing material readiness.
-- Concurrency/idempotency tests for quantity movement and repeated events.
-- End-to-end tests for the complete affected workflow.
+- Authorization tests for allowed and denied roles across the six roles.
+- Negative tests: material not issued, replacement piece not released, duplicate ECR send, RM revision after submit.
+- Tests for replacement release, ECR once-only send, RM revision by diff, and material gate.
+- Concurrency/idempotency tests for piece status transitions and repeated polls.
 - Regression tests proving historical measurements and tolerance revisions are preserved.
 
 ## 10. Agent workflow
-1. Read this file and relevant Phase 1 documents before coding.
+1. Read `00_DECISION_LOG.md` and relevant Phase 1 documents before coding.
 2. Inspect the existing repository and current conventions; do not assume paths or stack.
 3. Identify affected modules, data entities, API contracts and business rules.
 4. State assumptions and unresolved decisions before implementation.
@@ -99,11 +103,14 @@ For each change, add/update:
 10. Never modify unrelated modules or secrets.
 
 ## 11. Forbidden shortcuts
-- No hard-coded BOM composition for every product; use SC/BOM data.
-- No advancing failed or material-blocked quantities.
-- No copying operator values into QC fields.
-- No automatic Delivered status on packing alone.
+- No hard-coded product composition; use SC data.
+- No advancing failed or material-blocked pieces.
+- No copying operator values into QC fields (blind QC).
+- No manual editing of Packed or Delivered; they are derived automatically from piece status. (D-10)
 - No silent tolerance updates or measurement rewrites.
+- No writes to RM. (D-09, BR-067)
+- No auto-resend to ECR after ambiguous timeout. (BR-062)
+- No matching DC lines by part number (overwritten by RM); match by SC + part_name.
 - No stock or Vendor DC transaction duplication.
 - No ECR cost calculations in Production.
 - No unapproved AI feature or microservice decomposition.
