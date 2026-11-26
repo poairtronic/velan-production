@@ -25,9 +25,9 @@ Phase 4.5 establishes a containerized, multi-container local development archite
 
 * **Operating Manual & Skills:** Reviewed root `SKILLS.md` (318 lines). Containerization rules, zero-error verification rules, and scope boundaries enforced.
 * **Approved Phase 1–3 Documentation:**
-  * [`docs/phase-1/00_DECISION_LOG.md`](../phase-1/00_DECISION_LOG.md) (D-08 monorepo layout, D-13 independent Render services).
-  * [`docs/phase-2/2.1-system-architecture/`](../phase-2/2.1-system-architecture/) (ADR-01 decoupled architecture, ADR-08 Neon pooling).
-  * [`docs/phase-3/3.1-technology-specification/01-technology-stack-and-versions.md`](../phase-3/3.1-technology-specification/01-technology-stack-and-versions.md) & [`02-environments-and-hosting.md`](../phase-3/3.1-technology-specification/02-environments-and-hosting.md).
+  * [`docs/phase-1/00_DECISION_LOG.md`](../phase-1/00_DECISION_LOG.md) (`D-13` stack & Render deployment; `O-FE-01` resolved monorepo layout).
+  * [`docs/phase-2/2.1-system-architecture/`](../phase-2/2.1-system-architecture/) (`ADR-01` modular monolith, `ADR-08` unified Neon storage).
+  * [`docs/phase-3/3.1-technology-specification/01-technology-stack-and-versions.md`](../phase-3/3.1-technology-specification/01-technology-stack-and-versions.md) & [`02-environments-and-hosting.md`](../phase-3/3.1-technology-specification/02-environments-and-hosting.md) (Neon pooled `-pooler` vs direct endpoints on `:5432`).
 * **Prior Phase Reports:**
   * Phase 4.0 Preflight Audit Report (`Phase_4.0_Preflight_Audit_Report.md`)
   * Phase 4.1 Root Setup Report (`Phase-4.1-Completion-Report.md`)

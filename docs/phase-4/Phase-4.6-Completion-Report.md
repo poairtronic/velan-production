@@ -25,7 +25,7 @@ This report delivers the comprehensive technical audit, cross-phase architectura
    * Multi-stage `backend/Dockerfile` (Java 21 Temurin JDK $\to$ JRE, non-root user `velan`, port 8080), `frontend/Dockerfile` (Node 22 Alpine, Vite dev server on `0.0.0.0:5173`), `.dockerignore` files, and root `docker-compose.yml` are fully authored and statically validated.
    * Live Docker container runtime validation is marked as **BLOCKED on host Docker Desktop availability**, as Docker is not installed on the Windows host.
 4. **Strict Scope Discipline:** Zero business logic, zero authentication/RBAC, zero microservices, zero Redis/RabbitMQ/Kafka, zero Next.js, and zero Phase 5–8 features were introduced.
-5. **Git Safety:** All Phase 4.1–4.5 deliverables remain intentionally uncommitted in the working tree on branch `main` at commit `daf3941`. Zero commits and zero pushes were performed.
+5. **Git Safety (Snapshot at Phase 4.6 Closure):** At Phase 4.6 closure, deliverables remained uncommitted on `main` at `daf3941`. Subsequently, Phase 4 was committed and pushed directly to `main` as `44cc12e` (flagged as departing from `3.8-02` Git workflow in Phase 4.7).
 
 ---
 
@@ -50,7 +50,7 @@ The following authoritative documents were reviewed in full before auditing the 
 1. Root [`SKILLS.md`](../../SKILLS.md) (v1.0, 318 lines).
 2. Installed agent skills: `architecture-patterns`, `react-nextjs-development`, `code-showcase-react-ui-patterns`, `react-state-management`, `api-designer`, `database-migrations-sql-migrations`, `accidental-data-loss-prevention`.
 3. Phase 1 Requirements: `00_DECISION_LOG.md`, `02_SRS.md`, `06_Role_Matrix.md`, `08_Business_Rules.md`, `09_Integration_Specification.md`, `10_Acceptance_Criteria.md`, `15_Application_Master_Plan.md`.
-4. Phase 2 System Design: ADRs 001–008, domain data model, lifecycle state machines 2.3–2.6.
+4. Phase 2 System Design: `ADR-01`–`ADR-08`, domain data model, lifecycle state machines 2.3–2.6.
 5. Phase 3 Technical Standards: `3.1-technology-specification/`, `3.2-backend-standards/`, `3.3-database-and-naming-conventions/`, `3.4-api-standards/`, `3.5-security-audit-logging/`, `3.6-frontend-standards/`, `3.7-integration-conventions/`, `3.8-quality-process/`.
 6. Phase 4 Reports:
    * [`docs/phase-4/Phase_4.0_Preflight_Audit_Report.md`](Phase_4.0_Preflight_Audit_Report.md)
@@ -88,7 +88,7 @@ daf3941 feat(docs): complete Phase 3 - Technical Specification and Architecture 
 ### Audit Findings:
 * **Current Branch:** `main` (synchronized with `origin/main`).
 * **Latest Commit:** `daf3941` (Phase 3 closure commit preserved as HEAD).
-* **Uncommitted Changes:** All deliverables from Phases 4.1 through 4.5 are present as untracked files or modified files (`README.md`). Per owner instructions and Git safety rules, these remain uncommitted pending final Phase 4 closure approval.
+* **Uncommitted Changes (at Phase 4.6 closure):** Deliverables from Phases 4.1 through 4.5 were uncommitted at `daf3941` during 4.6 validation, then committed directly to `main` in `44cc12e` (see Phase 4.7 Git workflow audit in `Phase-4.7-Corrections-Report.md`).
 * **Ignored Artifacts:** Verified that `backend/target/`, `frontend/dist/`, `frontend/node_modules/`, and `frontend/*.tsbuildinfo` are completely ignored by `.gitignore` and do not appear in Git status.
 
 ---
@@ -98,7 +98,7 @@ daf3941 feat(docs): complete Phase 3 - Technical Specification and Architecture 
 * **Directory Layout:** `backend/`, `frontend/`, `docs/`, `.github/` exist at root.
 * **Separation of Applications:** Backend and frontend reside in discrete directories with independent build configurations (`pom.xml` vs `package.json`).
 * **`.gitignore`:** Contains comprehensive rules for Java/Maven, Node/Vite, TypeScript, IDEs, and OS files. Crucially, `.env*` is ignored while `!.env.example` is explicitly tracked.
-* **`.env.example`:** Minimal configuration template with placeholders for backend runtime (`PORT`, `SPRING_PROFILES_ACTIVE`), Neon connectivity (pooled `:6543` vs direct `:5432`), and frontend API URL (`VITE_API_BASE_URL`). Contains zero real secrets or credentials.
+* **`.env.example`:** Minimal configuration template with placeholders for backend runtime (`PORT`, `SPRING_PROFILES_ACTIVE`), Neon connectivity, and frontend API URL (`VITE_API_BASE_URL`). Contains zero real secrets or credentials. *(Phase 4.7 audit finding: `.env.example` erroneously lists `:6543` for Neon pooled `DATABASE_URL` instead of `:5432`; flagged outside `docs/` for cleanup in the next commit.)*
 * **`README.md`:** Documents project charter, technology stack, monorepo directory tree, independent Render deployment models, and local development commands.
 * **External Integrations:** Zero RM or ECR files introduced.
 * *Audit Result:* **PASS**.
@@ -339,7 +339,7 @@ dist/assets/index-ebZikjX3.js   224.99 kB │ gzip: 70.03 kB
 | 21 | Docker image build | Images built via Docker daemon | Docker Desktop not installed on host | CLI check | **BLOCKED** | Host runtime limitation |
 | 22 | Docker container runtime | Containers started via `docker compose up` | Docker Desktop not installed on host | CLI check | **BLOCKED** | Host runtime limitation |
 | 23 | Local development documentation | Clear local execution instructions in README | `README.md` updated with Section 5 | `README.md` | **PASS** | Docker & standalone |
-| 24 | Git and file preservation | All Phase 4.1–4.5 assets preserved uncommitted | All files intact; 0 commits, 0 pushes | `git status` | **PASS** | Working tree preserved |
+| 24 | Git and file preservation | All Phase 4.1–4.5 assets preserved uncommitted | Uncommitted during 4.6 validation; later committed on `main` (`44cc12e`) | `git status` / `git log` | **PASS** *(Note 4.7)* | Working tree preserved during 4.6; see 4.7 Git audit |
 | 25 | Security and secret management | 0 secrets, `.env` ignored, non-root user | Confirmed zero secrets in repo | Security audit | **PASS** | Clean repository |
 | 26 | Architecture consistency | Monorepo, independent apps, strict exclusions | Consistent with Phase 3 standards | Section 11 | **PASS** | Zero architectural drift |
 | 27 | Scope boundary compliance | Zero premature business features | Zero business tables, entities, or screens | Scope audit | **PASS** | Phase 5–8 boundaries kept |

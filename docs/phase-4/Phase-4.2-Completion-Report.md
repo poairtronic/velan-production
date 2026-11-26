@@ -27,7 +27,7 @@
 
 ### B. Project Documentation
 * **Phase 1 Requirements:** [`docs/phase-1/00_DECISION_LOG.md`](../phase-1/00_DECISION_LOG.md), [`15_Application_Master_Plan.md`](../phase-1/15_Application_Master_Plan.md).
-* **Phase 2 System Design:** [`docs/phase-2/2.1-system-architecture/`](../phase-2/2.1-system-architecture/) (ADRs 001–008, independent Render Web Service deployment).
+* **Phase 2 System Design:** [`docs/phase-2/2.1-system-architecture/`](../phase-2/2.1-system-architecture/) (`ADR-01`–`ADR-08`, independent Render Web Service deployment).
 * **Phase 3 Standards:** [`docs/phase-3/3.1-technology-specification/01-technology-stack-and-versions.md`](../phase-3/3.1-technology-specification/01-technology-stack-and-versions.md) (approved Spring Boot 3.4.3, Java 21, Maven 3.9.9), [`docs/phase-3/3.2-backend-standards/`](../phase-3/3.2-backend-standards/).
 * **Phase 4 Pre-flight Audit & Setup Reports:** [`docs/phase-4/Phase_4.0_Preflight_Audit_Report.md`](Phase_4.0_Preflight_Audit_Report.md), [`docs/phase-4/Phase-4.1-Completion-Report.md`](Phase-4.1-Completion-Report.md).
 

@@ -10,13 +10,13 @@ The platform is engineered as a high-reliability, modular monolithic manufacturi
 
 ## 2. Phase 3 Part-by-Part Architecture Breakdown
 
-Phase 3 is organized into eight sequentially authored and reviewed parts comprising **51 documents (5,691 lines)**:
+Phase 3 is organized into eight sequentially authored and reviewed parts comprising **51 documents** *(49 documents at Phase 3 closure `daf3941`, plus 2 documents added to Part 3.2 in Phase 4.7)*:
 
 | Part | Title | Core Scope & Deliverables | Status |
 |:---|:---|:---|:---:|
-| **[Part 3.1](file:///c:/Users/Admin/OneDrive/Desktop/velan%20production/velan-production/docs/phase-3/3.1-technology-specification/)** | **Technology Specification & Environments** | Java 21, Spring Boot 3.4, React 19, Vite 6, Tailwind CSS; Neon dual connection architecture (Flyway direct :5432 vs HikariCP pooled :6543); Cloudflare R2 pre-signed uploads (15-min expiry); in-process Caffeine cache; transactional outbox; Render deployment. | **Approved** |
+| **[Part 3.1](file:///c:/Users/Admin/OneDrive/Desktop/velan%20production/velan-production/docs/phase-3/3.1-technology-specification/)** | **Technology Specification & Environments** | Java 21, Spring Boot 3.4, React 19, Vite 6, Tailwind CSS; Neon connection architecture (Flyway direct vs PgBouncer `-pooler` pooled, both on port `:5432`); Cloudflare R2 pre-signed uploads (15-min expiry); in-process Caffeine cache; transactional outbox; Render deployment. | **Approved** |
 | **[Part 3.1a](file:///c:/Users/Admin/OneDrive/Desktop/velan%20production/velan-production/docs/phase-3/3.1-technology-specification/05-part-3.1-report.md)** | **Neon Connection & Version Corrections** | Correction pass reconciling Neon pooled vs direct connection strings and precise versioning. | **Approved** |
-| **[Part 3.2](file:///c:/Users/Admin/OneDrive/Desktop/velan%20production/velan-production/docs/phase-3/3.2-backend-standards/)** | **Backend Architecture & Coding Standards** | Modular monolith packaging; Clean Architecture layering (Domain $\to$ Application $\to$ Infrastructure $\to$ Presentation); Spring Application Events; transactional boundaries; JPA `@Version` optimistic locking; bounded Caffeine caching. | **Approved** |
+| **[Part 3.2](file:///c:/Users/Admin/OneDrive/Desktop/velan%20production/velan-production/docs/phase-3/3.2-backend-standards/)** | **Backend Architecture & Coding Standards** | Modular monolith packaging (`api/` vs `internal/`); unified 10-state-machine domain service pattern (`07`); coding conventions, Part 3.4 error mapping, and OPEN JPA entity policy (`08`); Spring Application Events; transactional boundaries; JPA `@Version` optimistic locking; bounded Caffeine caching. | **Approved (07–08 added in 4.7)** |
 | **[Part 3.3](file:///c:/Users/Admin/OneDrive/Desktop/velan%20production/velan-production/docs/phase-3/3.3-database-and-naming-conventions/)** | **Database & Naming Conventions** | Domain glossary; "SC" terminology resolution; cross-tier naming rules; forbidden names; PostgreSQL 16 types; native enum ban; append-only relational triggers; Flyway monotonic forward-only migrations; 18 Phase 2 conformance deviations catalogued. | **Approved** |
 | **[Part 3.4](file:///c:/Users/Admin/OneDrive/Desktop/velan%20production/velan-production/docs/phase-3/3.4-api-standards/)** | **REST API & Serialization Standards** | Base `/api/v1`; measurement decimal serialization as **JSON Strings**; `ApiResponse<T>` envelope; aggregate action pattern; standardized error envelope `{ code, message, details, timestamp, path, correlationId }`; 68 domain error codes; SSE stream; R2 pre-signed uploads; 49 primary endpoints. | **Approved** |
 | **[Part 3.5](file:///c:/Users/Admin/OneDrive/Desktop/velan%20production/velan-production/docs/phase-3/3.5-security-audit-logging/)** | **Security, RBAC, Audit & Observability** | Individual login (D-03); Argon2id password hashing; JWT (15 min) + HttpOnly sliding refresh cookie (7 days); PM Reassignment Rule; strictly 6 roles; multi-tier RBAC evaluation order (Admin override $\to$ Role deny $\to$ Role grant $\to$ Default deny); 10 mandatory audited actions; append-only audit defense; structured JSON logs; Sentry 5xx tracking; OWASP checklist. | **Approved** |
@@ -34,16 +34,19 @@ docs/phase-3/
 ├── 3.1-technology-specification/
 │   ├── 01-technology-stack-and-versions.md
 │   ├── 02-environments-and-hosting.md
-│   ├── 03-configuration-and-secrets.md
+│   ├── 03-environment-configuration.md
 │   ├── 04-dependency-and-build-policy.md
-│   └── 05-part-3.1-report.md
+│   ├── 05-part-3.1-report.md
+│   └── 06-part-3.1a-correction-report.md
 ├── 3.2-backend-standards/
-│   ├── 01-modular-monolith-structure.md
-│   ├── 02-layering-and-dependency-rules.md
-│   ├── 03-module-communication-and-events.md
-│   ├── 04-transaction-and-concurrency-rules.md
+│   ├── 01-module-structure-and-dependency-rules.md
+│   ├── 02-domain-services-and-state-machine-pattern.md
+│   ├── 03-transactions-concurrency-and-idempotency.md
+│   ├── 04-coding-conventions-and-layering.md
 │   ├── 05-performance-and-caching-rules.md
-│   └── 06-part-3.2-report.md
+│   ├── 06-part-3.2-report.md
+│   ├── 07-domain-services-and-state-machine-pattern.md
+│   └── 08-coding-conventions-and-layering.md
 ├── 3.3-database-and-naming-conventions/
 │   ├── 01-glossary-and-naming-conventions.md
 │   ├── 02-schema-and-data-type-conventions.md
