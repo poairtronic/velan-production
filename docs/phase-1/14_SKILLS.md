@@ -1,3 +1,5 @@
+Superseded for agent behaviour by /SKILLS.md; kept for history.
+
 # Velan Production — Agent Skills and Repository Instructions
 
 Updated 2026-11-24 — decisions D-01 to D-19 (see 00_DECISION_LOG.md)
