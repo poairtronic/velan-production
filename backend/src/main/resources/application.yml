@@ -1,0 +1,10 @@
+# Velan Production Backend Starter Configuration
+# Phase 4.2: Minimal starter configuration baseline
+# (Full profiles, database, and environment mappings belong to Phase 6 and later)
+
+spring:
+  application:
+    name: velan-production-backend
+
+server:
+  port: 8080

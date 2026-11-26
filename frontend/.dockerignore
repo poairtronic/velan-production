@@ -1,0 +1,10 @@
+node_modules/
+dist/
+dist-ssr/
+*.local
+.npm/
+.git/
+.gitignore
+.vscode/
+.idea/
+*.tsbuildinfo

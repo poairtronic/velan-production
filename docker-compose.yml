@@ -1,0 +1,38 @@
+# ==============================================================================
+# Velan Production — Docker Compose (Local Development Environment)
+# Coordinates independent Backend (Spring Boot) and Frontend (Vite + React)
+# Note: Zero database containers. Neon PostgreSQL deferred to Phase 7.
+# ==============================================================================
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: velan-backend
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - SPRING_PROFILES_ACTIVE=local
+    networks:
+      - velan-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: velan-frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_BASE_URL=http://localhost:8080/api/v1
+    networks:
+      - velan-network
+
+networks:
+  velan-network:
+    driver: bridge
