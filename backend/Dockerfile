@@ -36,6 +36,7 @@ EXPOSE 8080
 
 ENV PORT=8080 \
     SPRING_PROFILES_ACTIVE=local \
+    TZ=UTC \
     JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0"
 
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]

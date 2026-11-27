@@ -156,3 +156,13 @@ From the repository root:
 
 ### Git Workflow Rule
 - **PR-only to `main`:** Direct commits and direct pushes to `main` are forbidden. Every change must go through a topic branch, Pull Request, CI pass, and Squash Merge (`docs/phase-3/3.8-quality-process/02-git-workflow-and-release.md`).
+
+### Frontend Environment Variables (Phase 6.3)
+- `VITE_API_BASE_URL` (required in production builds; dev mode falls back to `http://localhost:8080/api/v1` from `frontend/.env.example`).
+- Display timezone is fixed to `Asia/Kolkata` in `frontend/src/lib/env.ts`.
+- **Run dev:** `cd frontend && npm run dev`
+- **Build production:** `cd frontend && VITE_API_BASE_URL=https://<api-host>/api/v1 npm run build`
+
+### Docker Compose & CI Environment Wiring (Phase 6.4)
+- **Local with Compose:** Copy `.env.example` to `.env`, set `JWT_SECRET` (Base64, >= 256 bits) and optional `DATABASE_URL`, then run `docker compose up --build`.
+- **CI Values:** `.github/workflows/ci.yml` runs the backend with `SPRING_PROFILES_ACTIVE=local` and a CI-only dummy `JWT_SECRET` (no `DATABASE_URL`, so `NeonConnectivityTests` skips), and sets `VITE_API_BASE_URL=http://localhost:8080/api/v1` for the frontend build.
