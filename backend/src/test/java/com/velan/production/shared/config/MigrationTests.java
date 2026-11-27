@@ -31,7 +31,10 @@ class MigrationTests {
             "sc_product_template_steps", "sc_product_node_statuses",
             "sc_product_step_parameters", "sc_product_dynamic_values", "drawing_documents",
             "machines", "operation_machines", "pieces", "piece_operations",
-            "piece_events", "operator_values", "qc_inspections", "measurement_values"
+            "piece_events", "operator_values", "qc_inspections", "measurement_values",
+            "qc_exceptions", "pm_dispositions", "piece_replacement_lineage",
+            "vendors", "vendor_dc_trackers", "user_notifications",
+            "outbox_events", "rm_sync_history"
     );
 
     @Test
@@ -68,7 +71,7 @@ class MigrationTests {
                         .load();
 
                 MigrateResult first = flyway.migrate();
-                assertEquals(8, first.migrationsExecuted, "Expected V001 through V008 migrations executed");
+                assertEquals(12, first.migrationsExecuted, "Expected V001 through V012 migrations executed");
 
                 for (String table : EXPECTED_TABLES) {
                     try (PreparedStatement ps = conn.prepareStatement(
@@ -276,6 +279,56 @@ class MigrationTests {
                     } finally {
                         conn.setAutoCommit(true);
                     }
+
+                    // 26. qc_exception whose sc_id differs from parent piece rejected
+                    UUID excId = UUID.randomUUID();
+                    assertThrows(SQLException.class, () -> st.execute(
+                            "INSERT INTO qc_exceptions (id, sc_id, piece_id, piece_operation_id, exception_type, reason, status, ecr_status, raised_by) "
+                            + "VALUES ('" + excId + "', '" + sc2Id + "', '" + piece1Id + "', '" + poId + "', 'QC_FAIL', 'bad', 'OPEN', 'PENDING', '" + userId + "')"));
+
+                    // 27. Duplicate replacement piece in piece_replacement_lineage rejected
+                    UUID piece2Id = UUID.randomUUID();
+                    UUID piece3Id = UUID.randomUUID();
+                    st.execute("INSERT INTO pieces (id, sc_id, sc_product_id, serial_number, status) "
+                            + "VALUES ('" + piece2Id + "', '" + sc1Id + "', '" + scProdId + "', 'SN-002', 'CREATED')");
+                    st.execute("INSERT INTO pieces (id, sc_id, sc_product_id, serial_number, status) "
+                            + "VALUES ('" + piece3Id + "', '" + sc1Id + "', '" + scProdId + "', 'SN-003', 'CREATED')");
+                    st.execute("INSERT INTO qc_exceptions (id, sc_id, piece_id, piece_operation_id, exception_type, reason, status, ecr_status, raised_by) "
+                            + "VALUES ('" + excId + "', '" + sc1Id + "', '" + piece1Id + "', '" + poId + "', 'QC_FAIL', 'bad', 'OPEN', 'PENDING', '" + userId + "')");
+                    st.execute("INSERT INTO piece_replacement_lineage (id, sc_id, qc_exception_id, original_piece_id, replacement_piece_id, created_by) "
+                            + "VALUES ('" + UUID.randomUUID() + "', '" + sc1Id + "', '" + excId + "', '" + piece1Id + "', '" + piece2Id + "', '" + userId + "')");
+                    assertThrows(SQLException.class, () -> st.execute(
+                            "INSERT INTO piece_replacement_lineage (id, sc_id, qc_exception_id, original_piece_id, replacement_piece_id, created_by) "
+                            + "VALUES ('" + UUID.randomUUID() + "', '" + sc1Id + "', '" + excId + "', '" + piece3Id + "', '" + piece2Id + "', '" + userId + "')"));
+
+                    // 28. Invalid DC status & duplicate (vendor_id, dc_number) rejected
+                    UUID vendorId = UUID.randomUUID();
+                    st.execute("INSERT INTO vendors (id, code, name) VALUES ('" + vendorId + "', 'V1', 'Vendor 1')");
+                    assertThrows(SQLException.class, () -> st.execute(
+                            "INSERT INTO vendor_dc_trackers (id, sc_id, vendor_id, dc_number, quantity_sent, status) "
+                            + "VALUES ('" + UUID.randomUUID() + "', '" + sc1Id + "', '" + vendorId + "', 'DC-1', 5, 'UNKNOWN')"));
+                    UUID trackerSc2Id = UUID.randomUUID();
+                    st.execute("INSERT INTO vendor_dc_trackers (id, sc_id, vendor_id, dc_number, quantity_sent, status) "
+                            + "VALUES ('" + trackerSc2Id + "', '" + sc2Id + "', '" + vendorId + "', 'DC-1', 5, 'NOT_RECEIVED')");
+                    assertThrows(SQLException.class, () -> st.execute(
+                            "INSERT INTO vendor_dc_trackers (id, sc_id, vendor_id, dc_number, quantity_sent, status) "
+                            + "VALUES ('" + UUID.randomUUID() + "', '" + sc1Id + "', '" + vendorId + "', 'DC-1', 3, 'PARTIAL')"));
+
+                    // 29. piece_operation pointing at a tracker of another SC rejected
+                    assertThrows(SQLException.class, () -> st.execute(
+                            "UPDATE piece_operations SET vendor_dc_tracker_id = '" + trackerSc2Id + "' WHERE id = '" + poId + "'"));
+
+                    // 30. Invalid outbox status rejected
+                    assertThrows(SQLException.class, () -> st.execute(
+                            "INSERT INTO outbox_events (id, aggregate_type, aggregate_id, event_type, payload, status) "
+                            + "VALUES ('" + UUID.randomUUID() + "', 'QC_EXCEPTION', '" + excId + "', 'CREATED', '{}'::jsonb, 'RETRYING')"));
+
+                    // 31. Allow user_notification and outbox_event with sc_id pointing at no existing SC
+                    UUID ghostScId = UUID.randomUUID();
+                    st.execute("INSERT INTO user_notifications (id, user_id, type, title, body, entity_type, entity_id, sc_id) "
+                            + "VALUES ('" + UUID.randomUUID() + "', '" + userId + "', 'INFO', 'Title', 'Body', 'SC', '" + ghostScId + "', '" + ghostScId + "')");
+                    st.execute("INSERT INTO outbox_events (id, aggregate_type, aggregate_id, event_type, payload, status, sc_id) "
+                            + "VALUES ('" + UUID.randomUUID() + "', 'QC_EXCEPTION', '" + excId + "', 'CREATED', '{}'::jsonb, 'PENDING', '" + ghostScId + "')");
                 }
             } finally {
                 try (Statement st = conn.createStatement()) {
