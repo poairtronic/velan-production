@@ -30,7 +30,7 @@ In accordance with `SKILLS.md §0`, all known architectural conflicts remain for
 * **Security & Audit Status:** **OPEN.** Audit schemas and import permissions accommodate both direct and calculated piece counts without structural modification.
 
 #### Conflict C-3: The "SC" Terminology Problem (OPEN with Recommendation)
-* **Conflict Statement:** "SC" carries four different meanings across systems: RM screen "Sales Component (SC Code)", Phase 1/2 prose "Sales Contract", Phase 2 tables `subcontracts`, and ECR field "Subcontract order number".
+* **Conflict Statement:** "SC" carries four different meanings across systems: RM screen "Size Card (SC Code)", Phase 1/2 prose "Size Card", Phase 2 tables `subcontracts`, and ECR field "Size Card number".
 * **Recommendation:** Adopt neutral permission codes `ORDER:SC_VIEW`, `ORDER:SC_CREATE`, and `ORDER:SC_RELEASE`.
 * **Status:** **OPEN.** Submitted for project owner direction before Phase 5 API implementation.
 

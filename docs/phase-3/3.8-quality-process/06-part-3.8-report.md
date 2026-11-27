@@ -31,7 +31,7 @@ In accordance with `SKILLS.md §0`, all known architectural conflicts remain for
 * **Quality Standards Status:** **OPEN.** Test data builders support constructing test fixtures via direct piece quantities or BOM ratio calculations.
 
 #### Conflict C-3: The "SC" Terminology Problem (OPEN with Recommendation)
-* **Conflict Statement:** "SC" carries four different meanings across systems: RM screen "Sales Component (SC Code)", Phase 1/2 prose "Sales Contract", Phase 2 tables `subcontracts`, and ECR field "Subcontract order number".
+* **Conflict Statement:** "SC" carries four different meanings across systems: RM screen "Size Card (SC Code)", Phase 1/2 prose "Size Card", Phase 2 tables `subcontracts`, and ECR field "Size Card number".
 * **Recommendation:** Adopt neutral technical names `sc_headers` and `sc_products` in database and code.
 * **Status:** **OPEN.** Submitted for project owner direction before Phase 5 API implementation.
 

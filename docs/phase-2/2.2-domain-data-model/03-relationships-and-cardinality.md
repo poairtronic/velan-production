@@ -284,7 +284,7 @@ stateDiagram-v2
 ### 7. Product Material Readiness and Operation Sequencing Model
 
 To mirror actual factory operations and maintain clean integration boundaries with RM (V-SMART):
-* **SC Header vs. Product Line Items:** The Sales Contract header (`subcontracts`) groups the commercial order. The specific manufactured products ordered are modeled as `subcontract_products`.
+* **SC Header vs. Product Line Items:** The Size Card header (`subcontracts`) groups the commercial order. The specific manufactured products ordered are modeled as `subcontract_products`.
 * **Independent Material Readiness Per Product:** Material readiness is tracked strictly at the **Product line item level** (`subcontract_products.material_ready`).
   - In multi-product SCs (e.g., SC002 containing Product 1: Gate Valve and Product 2: Globe Valve), each product tracks material readiness independently.
   - When RM confirms material issue for Product 1, only Product 1's `material_ready` flag transitions to `true`.

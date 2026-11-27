@@ -119,7 +119,7 @@ On the shop floor, an operator records multiple dimensional measurements for a s
 * **Batch Size Limit:** Maximum **50 measurements** per operation submit.
 
 #### B. Excel/CSV Contract and BOM Data Import
-For importing Sales Contracts, Product Line Items, or Process Routings:
+For importing Size Cards, Product Line Items, or Process Routings:
 * **Endpoint:** `POST /api/v1/sales-contracts/import`
 * **Transaction Semantics:** **Configurable Atomic vs Partial-Failure.**
   - Default: **Atomic.** If any row in the imported contract fails validation, the entire contract import aborts, returning a detailed row-by-row error report.

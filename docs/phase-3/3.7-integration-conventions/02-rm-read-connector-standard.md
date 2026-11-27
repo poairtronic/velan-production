@@ -20,7 +20,7 @@
 
 #### 1.3 The Four Inbound Data Flows (INT-001, INT-002, INT-009, INT-010)
 
-#### Flow 1: Sales Contract & Requisition Ingestion (INT-001)
+#### Flow 1: Size Card & Requisition Ingestion (INT-001)
 * **Source Endpoints:** `GET /api/sc`, `/api/sc/:id`, `/api/sc/traceability/:poNumber`, `/api/rm`, `/api/rm/:id`.
 * **Audited RM Source Entities & Fields (`09_Integration_Specification.md:20-25`):**
   - `sales_order_components`: `id`, `sc_number`, `po_id`, `product_name`, `target_quantity`, `status`, `drawing_number`. *(Only intake when status is `SUBMITTED`, `STORES_PENDING`, or `IN_PRODUCTION`).*

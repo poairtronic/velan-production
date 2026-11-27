@@ -16,7 +16,7 @@ The production lifecycle is governed by an unbroken, 10-level domain hierarchy:
 ```
 Level 1:  Purchase Order (PO)                [Commercial Order from Customer]
            │
-Level 2:  └── Sales Contract (SC)            [Production Work Order Header from RM / V-SMART]
+Level 2:  └── Size Card (SC)            [Production Work Order Header from RM / V-SMART]
                │
 Level 3:      └── Subcontract Product        [Specific Product Line Item within SC with Target Sets]
                    │
@@ -43,7 +43,7 @@ To eliminate ambiguity across commercial orders, engineering, shop-floor executi
 
 | Term | Domain Definition | Example | Database Representation |
 | :--- | :--- | :--- | :--- |
-| **Sales Contract (SC)** | The commercial production order header transmitted by RM (V-SMART). Can contain one or multiple manufactured products. | SC002 (Requisition #REQ-9812) | `subcontracts` entity |
+| **Size Card (SC)** | The commercial production order header transmitted by RM (V-SMART). Can contain one or multiple manufactured products. | SC002 (Requisition #REQ-9812) | `subcontracts` entity |
 | **SC Product (Subcontract Product)** | A distinct manufactured product line item ordered under an SC, specifying the catalog product and target set quantity. **Material readiness is tracked independently at this level.** | Line 1: 2" Class 600 Gate Valve (Target: 4 sets) | `subcontract_products` entity |
 | **Main Catalog Product** | The engineering catalog definition or valve assembly specifications. | 2" Class 600 Gate Valve (Cast Steel, Flanged) | `products` entity |
 | **Component (BOM Line)** | An engineering part type defined in the Bill of Materials required to assemble one unit of the product. | Flange (ARG), Spindle (SPG), Valve Body (VBM), Jig Foot | `bom_lines` entity |
@@ -61,12 +61,12 @@ To eliminate ambiguity across commercial orders, engineering, shop-floor executi
 
 ### 4. PO, SC, Multi-Product, and BOM Hierarchy Diagram
 
-The following diagram illustrates how customer Purchase Orders, Sales Contracts, Subcontract Products, and Bill of Materials relate:
+The following diagram illustrates how customer Purchase Orders, Size Cards, Subcontract Products, and Bill of Materials relate:
 
 ```mermaid
 flowchart TD
     PO["Purchase Order (PO)<br/>(e.g., PO-78492 / Shell Global)"]
-    SC["Sales Contract (SC)<br/>(e.g., SC002 / Requisition REQ-9812)"]
+    SC["Size Card (SC)<br/>(e.g., SC002 / Requisition REQ-9812)"]
     
     subgraph SCProducts ["SC Product Line Items (Independent Material Gates)"]
         SCP1["SC Product 1: 2-inch Gate Valve<br/>Target: 4 Sets | material_ready = true"]
@@ -119,7 +119,7 @@ flowchart TD
 ```
 
 #### Diagram Explanation in Simple Language
-* A customer **Purchase Order (PO)** can contain multiple **Sales Contracts (SCs)**.
+* A customer **Purchase Order (PO)** can contain multiple **Size Cards (SCs)**.
 * Each SC contains **one or multiple product lines** (`subcontract_products`), uniquely identified by `line_number` (`UNIQUE (sc_id, line_number)`). The same catalog product can appear on multiple distinct lines under an SC with different target quantities, delivery dates, or drawing revisions.
 * Each product line tracks **independent material readiness status**. When material is issued for Line 1, only Line 1's pieces are unlocked for initial operation entry. Line 2's pieces remain locked in `PENDING` / `AWAITING_MATERIAL` until RM confirms material issue for Line 2.
 * The system multiplies each product line's target set quantity by its BOM line ratios to calculate total physical piece demand.
@@ -131,7 +131,7 @@ flowchart TD
 #### 5.1 Business Requirement for Piece-to-Set Association
 In manufacturing precision valve sets, physical components are not anonymous loose bulk parts. The business requires individual component identities to be deterministically associated with a particular set within an SC from the moment of intake:
 * Component identity must clearly reflect:
-  1. **SC Identity:** The Sales Contract to which it belongs (e.g., `SC002`).
+  1. **SC Identity:** The Size Card to which it belongs (e.g., `SC002`).
   2. **Set Sequence:** The specific assembly set unit to which it is dedicated (e.g., `1`, `2`, `3`...).
   3. **Component Type:** The BOM part code (e.g., `ARG`, `SPG`, `VBM`, `JIG`).
   4. **Component Sequence within Set:** When a set requires multiple units of the same component (e.g., 2 Spindles per set), the individual unit index (`1`, `2`).
@@ -256,7 +256,7 @@ flowchart TD
 ### 7. Product Material Readiness and Operation Sequencing
 
 #### 7.1 Independent Product-Level Material Readiness Model
-The data model strictly differentiates the commercial Sales Contract (`subcontracts`) from its constituent ordered products (`subcontract_products`):
+The data model strictly differentiates the commercial Size Card (`subcontracts`) from its constituent ordered products (`subcontract_products`):
 * **Material Readiness Per Product:** Material readiness is tracked **per product line item** (`subcontract_products.material_ready`), not at the overall SC header level.
 * **Multi-Product SC Independence:** If an SC contains multiple products (e.g., Product 1: 2" Gate Valve and Product 2: 3" Globe Valve), each product tracks material readiness independently.
   - When RM issues raw materials for Product 1, only Product 1's `material_ready` flag transitions to `true`.

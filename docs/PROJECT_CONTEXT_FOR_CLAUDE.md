@@ -67,7 +67,7 @@ Prior to Velan Production, the factory experienced:
 5. **Lack of Real-Time Progress Visibility:** Plant managers could not answer simple customer inquiries regarding order status without walking the physical shop floor to find parts.
 
 ### 1.3 Business Problems Solved
-* **Deterministic Traceability:** Every physical piece of steel receives an immutable digital identity linked to its customer Sales Contract (SC), parent assembly set, and Bill of Materials (BOM) slot from the moment of intake.
+* **Deterministic Traceability:** Every physical piece of steel receives an immutable digital identity linked to its customer Size Card (SC), parent assembly set, and Bill of Materials (BOM) slot from the moment of intake.
 * **Guaranteed Raw Material Gating:** Machine operators cannot open a job or record machining cuts until raw material issuance is confirmed by the Raw Material warehouse.
 * **Independent, Blind Quality Control:** Operators enter machining readings; QC inspectors perform independent physical measurements using calibrated tools without seeing operator numbers ("blind QC").
 * **Formal Engineering Exception Governance:** Out-of-tolerance non-conformances trigger immediate physical and digital quarantine. Only the Project Manager (PM) can authorize remediation via four strict dispositions: Continue (Concession), Extra Process, Return to Earlier Operation (Rework), or Reject and Restart (Scrap).
@@ -85,7 +85,7 @@ The application is built for six specific, confirmed shop-floor personas:
 
 ### 1.5 Manufacturing Workflow in Simple Business Language
 Before introducing technical terminology, the physical life of an order proceeds as follows:
-1. **Order Receipt:** A customer places an order for 4 large industrial gate valves. The commercial contract enters the system as a Sales Contract (SC).
+1. **Order Receipt:** A customer places an order for 4 large industrial gate valves. The commercial contract enters the system as a Size Card (SC).
 2. **Explosion into Parts:** The engineering catalog specifies that each valve "set" requires 1 Flange, 2 Spindles, 1 Valve Body, and 3 Jig Feet. The system generates 28 individual serialized metal pieces (7 pieces $\times$ 4 sets) and immediately assigns each piece to its specific valve set (Set #1 through Set #4).
 3. **Material Arrival:** Raw steel bars and castings arrive at the factory stores. Stores confirms raw material has been issued. Only then are machine operators allowed to touch the parts.
 4. **Machining Steps:** Each piece moves through ordered machining stations (e.g., Facing $\rightarrow$ Turning $\rightarrow$ Milling $\rightarrow$ Grinding). Operators execute cuts and enter their measurements on touch-screen terminals.
@@ -98,7 +98,7 @@ Before introducing technical terminology, the physical life of an order proceeds
 
 | Functional Domain | In-Scope (Velan Production) | Out-of-Scope (External System / Excluded) |
 | :--- | :--- | :--- |
-| **Sales Contracts** | Manual SC creation, Excel bulk import, RM requisition sync, diff-based revisions. | Customer sales negotiation, credit checks, pricing. |
+| **Size Cards** | Manual SC creation, Excel bulk import, RM requisition sync, diff-based revisions. | Customer sales negotiation, credit checks, pricing. |
 | **Inventory & Raw Materials** | Material readiness gating (yes/no flag per product line item), heat code viewing. | Inventory ledger, stock replenishment, bin locations, physical stock issues (**Owned by RM / V-SMART**). |
 | **Component Fabrication** | Piece-level tracking, operation routing, operator measurement capture, priority lists. | Direct machine NC code generation (CAM), tool wear monitoring. |
 | **Quality & Tolerances** | Tolerance extraction, independent blind QC data entry, calibrated tool validation. | Physical calibration laboratory management. |
@@ -301,7 +301,7 @@ Total Physical Pieces Created: 8 Pieces pre-allocated across Sets #1 and #2.
 
 ### 4.3 The 10-Level Manufacturing Entity Hierarchy
 The data architecture is structured across ten relational levels:
-$$\text{Level 1: Purchase Order } (PO) \longrightarrow \text{Level 2: Sales Contract } (SC) \longrightarrow \text{Level 3: Subcontract Product Line Item}$$
+$$\text{Level 1: Purchase Order } (PO) \longrightarrow \text{Level 2: Size Card } (SC) \longrightarrow \text{Level 3: Subcontract Product Line Item}$$
 $$\longrightarrow \text{Level 4: BOM Lines} \longrightarrow \text{Level 5: Assembled Sets} \longrightarrow \text{Level 6: Physical Pieces}$$
 $$\longrightarrow \text{Level 7: Routing Operations} \longrightarrow \text{Level 8: Measurement Sessions}$$
 $$\longrightarrow \text{Level 9: QC Inspection Records} \longrightarrow \text{Level 10: Non-Conformance Exceptions \& Dispositions}$$
@@ -380,7 +380,7 @@ The backend is architected as an internal **Modular Monolith** organized into 11
 
 ```
 src/main/java/com/velan/production/
-├── order/         <-- Commercial Purchase Orders, Sales Contracts, Line Items, RM Sync Intake
+├── order/         <-- Commercial Purchase Orders, Size Cards, Line Items, RM Sync Intake
 ├── engineering/   <-- Products Catalog, BOM Lines, Routing Templates, Tolerances, Drawing Files
 ├── execution/     <-- Physical Pieces, Operations Progression, Operator Worklists, Bulk Data Capture
 ├── quality/       <-- Independent QC Inspection Sessions, Calibrated Instruments, Blind Verification
@@ -426,7 +426,7 @@ Velan Production is governed by ten interconnected, deterministic state machines
 | **4. QC Inspection Session** (`qc_inspections`) | `quality` | 5 | `SCHEDULED`, `CLAIMED_IN_PROGRESS`, `SUBMITTED_PASSED`, `SUBMITTED_FAILED`, `CANCELLED` | `docs/phase-2/2.5-qc-and-exception-state-machines/02-qc-inspection-state-machine-and-tolerances.md` |
 | **5. QC Exception Case** (`qc_exceptions`) | `exception` | 6 | `OPEN_UNDER_REVIEW`, `DISPOSITIONED_CONCESSION`, `DISPOSITIONED_REWORK`, `DISPOSITIONED_EXTRA_PROCESS`, `DISPOSITIONED_SCRAP`, `RESOLVED_CLOSED` | `docs/phase-2/2.5-qc-and-exception-state-machines/03-exception-lifecycle-and-pm-dispositions.md` |
 | **6. Transactional Outbox Event** (`outbox_events`) | `integration` | 5 | `PENDING`, `IN_FLIGHT`, `PUBLISHED`, `RETRY_SCHEDULED`, `DEAD_LETTER` | `docs/phase-2/2.5-qc-and-exception-state-machines/04-ecr-outbox-integration-state-machine.md` |
-| **7. Sales Contract (SC) Header** (`subcontracts`) | `order` | 7 | `DRAFT_INTAKE`, `ACTIVE`, `IN_PRODUCTION`, `PRODUCTION_COMPLETE`, `PARTIALLY_DELIVERED`, `DELIVERED`, `CANCELLED` | `docs/phase-2/2.6-sc-and-completion-state-machine/01-sc-lifecycle-overview-and-states.md` |
+| **7. Size Card (SC) Header** (`subcontracts`) | `order` | 7 | `DRAFT_INTAKE`, `ACTIVE`, `IN_PRODUCTION`, `PRODUCTION_COMPLETE`, `PARTIALLY_DELIVERED`, `DELIVERED`, `CANCELLED` | `docs/phase-2/2.6-sc-and-completion-state-machine/01-sc-lifecycle-overview-and-states.md` |
 | **8. SC Product Line Item** (`subcontract_products`) | `order` | 7 | `PLANNED`, `IN_PRODUCTION`, `PRODUCTION_COMPLETE`, `DISPATCH_PENDING`, `PARTIALLY_DELIVERED`, `DELIVERED`, `CANCELLED` | `docs/phase-2/2.6-sc-and-completion-state-machine/01-sc-lifecycle-overview-and-states.md` |
 | **9. Assembled Set** (`assembled_sets`) | `dispatch` | 7 | `BUILDING`, `PRODUCTION_COMPLETE`, `FINAL_QC_PASSED`, `PACKING_CONFIRMED`, `DISPATCH_PENDING`, `DELIVERED`, `CANCELLED` | `docs/phase-2/2.6-sc-and-completion-state-machine/03-packing-and-dispatch-state-machines.md` |
 | **10. Packing Record** (`packing_records`) | `dispatch` | 2 | `ACTIVE`, `VOIDED` | `docs/phase-2/2.6-sc-and-completion-state-machine/03-packing-and-dispatch-state-machines.md` |
@@ -487,7 +487,7 @@ Velan Production is governed by ten interconnected, deterministic state machines
 * **`RETRY_SCHEDULED`:** HTTP timeout or 5xx error; exponential backoff applied (attempt $N \le 5$).
 * **`DEAD_LETTER`:** Exceeded 5 retries; raised high-priority system administrator alert for manual re-drive.
 
-#### 7.2.7 Sales Contract Header Lifecycle (`subcontracts.status`)
+#### 7.2.7 Size Card Header Lifecycle (`subcontracts.status`)
 * **`DRAFT_INTAKE`:** Manual entry form or Excel import staged prior to formal activation.
 * **`ACTIVE`:** Activated by PM or auto-synced from RM requisition; sets, pieces, and operations created.
 * **`IN_PRODUCTION`:** Material issued for at least one line; machining actively underway on shop floor.
@@ -580,7 +580,7 @@ Quality Control is the central integrity boundary of Velan Production. Precision
 
 ### 9.1 Static vs. Dynamic Tolerances
 * **Static Limits:** Standard engineering dimensions and bilateral tolerances extracted from process routing templates (e.g., Nominal: 50.00 mm, Lower Limit: -0.05 mm, Upper Limit: +0.05 mm).
-* **Dynamic Offsets:** Order-specific tolerances defined in customer engineering specifications or Design tolerance sheets (Excel/PDF) attached to the Sales Contract.
+* **Dynamic Offsets:** Order-specific tolerances defined in customer engineering specifications or Design tolerance sheets (Excel/PDF) attached to the Size Card.
 
 ### 9.2 Tolerance Revision Intake and Approval (`BR-023 to BR-028`)
 1. **Upload:** Designer uploads tolerance sheet (Excel or PDF blueprint) to Cloudflare R2.
@@ -686,7 +686,7 @@ sequenceDiagram
 * **Frequency:** Background polling every 2 to 5 minutes, supplemented by a manual "Refresh Now" button on PM screens.
 * **13 Read Endpoints Handled:**
   1. `/api/v1/purchase_orders`: Read commercial PO headers.
-  2. `/api/v1/subcontracts`: Read approved sales contracts.
+  2. `/api/v1/subcontracts`: Read approved Size Cards.
   3. `/api/v1/subcontract_products`: Read product lines and target quantities.
   4. `/api/v1/products`: Read finished product master catalog.
   5. `/api/v1/components`: Read engineering component catalog.
@@ -787,8 +787,8 @@ The technical direction of Velan Production is formalized in eight approved Arch
 
 The following catalogue consolidates all 70 foundational Business Rules (`BR-001` through `BR-070`) established in Phase 1 (`docs/phase-1/08_Business_Rules.md`) and refined by the controlling Decision Log (`docs/phase-1/00_DECISION_LOG.md`):
 
-### 13.1 Sales Contract (SC) & Requisition Rules
-* **BR-001:** An approved RM Sales Contract creates a Production record via automated RM polling; an authorized PM or Admin can also create an SC via manual UI form or Excel bulk import.
+### 13.1 Size Card (SC) & Requisition Rules
+* **BR-001:** An approved RM Size Card creates a Production record via automated RM polling; an authorized PM or Admin can also create an SC via manual UI form or Excel bulk import.
 * **BR-002:** Production must preserve the original RM SC number, requisition ID (`REQ-XXXX`), and commercial source references.
 * **BR-003:** Duplicate sync, import, or entry must never create duplicate SCs, products, or pieces (enforced by `UNIQUE(sc_number)`).
 * **BR-004:** The system must strictly preserve the unbroken hierarchy: PO $\rightarrow$ SC $\rightarrow$ Product Line Item $\rightarrow$ Piece.

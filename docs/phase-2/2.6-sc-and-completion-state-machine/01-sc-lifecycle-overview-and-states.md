@@ -5,10 +5,10 @@
 
 ### 1. Executive Summary & Objective
 
-In the Velan Production platform, the **Sales Contract (SC)**—modeled in the database as `subcontracts`—serves as the primary commercial and manufacturing work order header. It governs the production demand received from the Raw Material (RM) system (V-SMART) or initiated directly on the shop floor. 
+In the Velan Production platform, the **Size Card (SC)**—modeled in the database as `subcontracts`—serves as the primary commercial and manufacturing work order header. It governs the production demand received from the Raw Material (RM) system (V-SMART) or initiated directly on the shop floor. 
 
 An SC does not represent an undifferentiated batch of bulk parts; rather, it structures work across a rigorous, multi-tier hierarchy:
-$$\text{Customer Purchase Order (PO)} \longrightarrow \text{Sales Contract (SC)} \longrightarrow \text{SC Product Line Items} \longrightarrow \text{Assembled Sets} \longrightarrow \text{Physical Pieces} \longrightarrow \text{Routing Operations}$$
+$$\text{Customer Purchase Order (PO)} \longrightarrow \text{Size Card (SC)} \longrightarrow \text{SC Product Line Items} \longrightarrow \text{Assembled Sets} \longrightarrow \text{Physical Pieces} \longrightarrow \text{Routing Operations}$$
 
 The primary objective of **Part 2.6 – SC and Completion State Machine** is to specify the complete, deterministic lifecycle models that govern how an SC:
 1. Originates through manual entry, Excel bulk import, or automated RM synchronization.
@@ -27,7 +27,7 @@ To eliminate ambiguity across commercial orders, shop-floor execution, and quali
 ```mermaid
 flowchart TD
     PO["Purchase Order (PO)<br/>(Entity: purchase_orders)<br/>Commercial Contract from Customer"]
-    SC["Sales Contract (SC)<br/>(Entity: subcontracts)<br/>Manufacturing Work Order Header"]
+    SC["Size Card (SC)<br/>(Entity: subcontracts)<br/>Manufacturing Work Order Header"]
     
     subgraph Products ["SC Product Line Items (Independent Material Gates)"]
         SCP1["Line 1: 2-inch Class 600 Gate Valve<br/>(Entity: subcontract_products)<br/>Target: 4 Sets | material_ready = true"]
@@ -170,7 +170,7 @@ In manufacturing execution, customer amendments or raw material availability fre
 
 ### 4. Exhaustive SC State Catalogue
 
-The lifecycle of a Sales Contract header (`subcontracts.status`) is governed by seven distinct, mutually exclusive states:
+The lifecycle of a Size Card header (`subcontracts.status`) is governed by seven distinct, mutually exclusive states:
 
 ```
 [ DRAFT_INTAKE ] ──► [ ACTIVE ] ──► [ IN_PRODUCTION ] ──► [ PRODUCTION_COMPLETE ]
@@ -193,7 +193,7 @@ The lifecycle of a Sales Contract header (`subcontracts.status`) is governed by 
 | `PRODUCTION_COMPLETE` | **Production Complete** | Manufacturing Terminal | 100% of pre-allocated pieces across 100% of product lines have completed all machining operations and 100% of assembled sets have passed Final QC inspection (`is_final_qc_passed = true`). All sets are staged in the packaging or dispatch area. |
 | `PARTIALLY_DELIVERED`| **Partially Delivered** | Logistics Execution | At least one complete set has been confirmed dispatched and delivered at the loading dock (`assembled_sets.status = 'DELIVERED'`), but other complete sets remain in production, packaging, or warehouse staging. |
 | `DELIVERED` | **Delivered / Closed** | Commercial Terminal | 100% of ordered sets across all product line items have been confirmed physically dispatched from the loading dock with verified gate pass and vehicle documentation. All operational obligations are fulfilled. |
-| `CANCELLED` | **Cancelled** | Administrative Terminal | The Sales Contract has been formally cancelled due to customer order termination or commercial annulment. Governed exclusively by the Admin role under strict validation rules. |
+| `CANCELLED` | **Cancelled** | Administrative Terminal | The Size Card has been formally cancelled due to customer order termination or commercial annulment. Governed exclusively by the Admin role under strict validation rules. |
 
 ---
 

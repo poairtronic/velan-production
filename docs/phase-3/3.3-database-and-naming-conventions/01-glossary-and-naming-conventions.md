@@ -16,7 +16,7 @@
 | Term | Domain Acronym | Technical Entity / Concept | Architectural Definition & Manufacturing Scope |
 | :--- | :--- | :--- | :--- |
 | **Purchase Order** | `PO` | `purchase_orders` | The overarching commercial contract issued by a customer (e.g. Shell, Aramco), grouping one or more manufacturing work orders. |
-| **Sales Contract** | `SC` | `subcontracts` / `sc_headers`* | The commercial work order header transmitted from RM (V-SMART) or created manually/Excel. Groups one or more product line items. |
+| **Size Card** | `SC` | `subcontracts` / `sc_headers`* | The commercial work order header transmitted from RM (V-SMART) or created manually/Excel. Groups one or more product line items. |
 | **Product Line Item** | `SC Product` | `subcontract_products` | Distinct line item within an SC specifying catalog product, target sets, and independent raw material readiness gate. |
 | **Catalog Product** | - | `products` | Standard finished industrial valve or engineered assembly in the engineering catalog (e.g. 2" Class 600 Gate Valve). |
 | **Bill of Materials**| `BOM` | `bom_lines` | Hierarchical component formula defining part codes, metallurgy, and exact ratio required per complete valve set (e.g. 2 Flanges per Set). |
@@ -35,24 +35,10 @@
 
 ---
 
-### 3. The "SC" Terminology Problem (OPEN)
+### 3. Canonical Domain Glossary (CLOSED — Owner Decision)
 
-As documented in Part 3.1 Document 05, the abbreviation **"SC"** is used with four conflicting meanings across existing systems:
-1. **RM Screen Label:** "Sales Component (SC Code)" (referring to component part numbers in Delivery Challans).
-2. **Phase 1 & Phase 2 Prose:** "Sales Contract" (referring to customer commercial production work orders).
-3. **Phase 2 Relational Schema:** `subcontracts` / `subcontract_products` (relational table names chosen during data modeling).
-4. **ECR Exception Intake Field:** "Subcontract order number" (`scNumber`).
-
-#### 3.1 Architectural Conflict Analysis
-In precision manufacturing, "subcontract" strongly denotes outsourced third-party vendor fabrication. However, in Velan Production, the primary entity represents the overall factory production contract for complete valve sets (machined in-house, with occasional outsourced vendor operations). Calling the primary work order `subcontracts` creates cognitive dissonance with shop-floor operations.
-
-#### 3.2 Evaluation of Options
-* **Option A (Commercial Alignment):** Rename tables to `sales_contracts` and `sales_contract_products`.
-* **Option B (Phase 2 Legacy Alignment):** Retain `subcontracts` and `subcontract_products`.
-* **Option C (Recommended Neutral Technical Standard):** Adopt neutral technical table names: `sc_headers` and `sc_products` (or `scs` and `sc_lines`), with column `sc_number`. Avoids "subcontract" unless the business explicitly confirms it represents outsourced work.
-
-#### 3.3 Status
-**OPEN.** Documented for project owner decision. The naming conventions below support clean normalization during Phase 7 (Database Design and Migrations).
+- **PO = Purchase Order:** Top-level commercial order header (one PO has many Size Cards).
+- **SC = Size Card:** Production order card under a PO listing products and quantities (`sc_headers`, `sc_products`, `sc_number`, `/api/v1/scs`). *(Resolves the historical "Size Card" / "Size Card" / "Subcontract" terminology conflict.)*
 
 ---
 

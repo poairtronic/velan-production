@@ -30,7 +30,7 @@ In accordance with `SKILLS.md §0`, all known architectural conflicts remain for
 * **API Standards Status:** **OPEN.** Endpoints `POST /api/v1/sales-contracts/import` and `/api/v1/sales-contracts/{id}/actions/release` are catalogued to accept either input structure.
 
 #### Conflict C-3: The "SC" Terminology Problem (OPEN with Recommendation)
-* **Conflict Statement:** "SC" carries four different meanings across systems: RM screen "Sales Component (SC Code)", Phase 1/2 prose "Sales Contract", Phase 2 tables `subcontracts`, and ECR field "Subcontract order number".
+* **Conflict Statement:** "SC" carries four different meanings across systems: RM screen "Size Card (SC Code)", Phase 1/2 prose "Size Card", Phase 2 tables `subcontracts`, and ECR field "Size Card number".
 * **Recommendation:** Adopt neutral technical API paths `/api/v1/sales-contracts` (or `/api/v1/sc-headers`), avoiding the term "subcontract" unless the business explicitly confirms it represents outsourced vendor fabrication.
 * **Status:** **OPEN.** Submitted for project owner direction before Phase 5 API implementation.
 

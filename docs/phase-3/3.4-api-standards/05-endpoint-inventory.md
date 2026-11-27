@@ -20,7 +20,7 @@
 | **AUTH** | `GET` | `/api/v1/auth/me` | Fetch active user identity, roles, and permissions | `AUTHENTICATED` | None | `UserProfileResponseDTO` | None |
 | **ORDER** | `GET` | `/api/v1/sales-contracts` | List contract orders with pagination & filters | `ORDER_SC_VIEW` | None | `PageResponse<SalesContractSummaryDTO>` | Open (C-3) |
 | **ORDER** | `GET` | `/api/v1/sales-contracts/{id}` | Get full contract order details and product line items | `ORDER_SC_VIEW` | None | `SalesContractDetailDTO` | Open (C-3) |
-| **ORDER** | `POST` | `/api/v1/sales-contracts` | Create new sales contract manually | `ORDER_SC_CREATE` | `CreateSalesContractRequestDTO` | `SalesContractDetailDTO` | Open (C-3) |
+| **ORDER** | `POST` | `/api/v1/sales-contracts` | Create new Size Card manually | `ORDER_SC_CREATE` | `CreateSalesContractRequestDTO` | `SalesContractDetailDTO` | Open (C-3) |
 | **ORDER** | `POST` | `/api/v1/sales-contracts/import` | Bulk import contract orders from Excel/CSV file | `ORDER_SC_IMPORT` | `MultipartFile` | `ImportSummaryResponseDTO` | Open (C-2, C-3) |
 | **ORDER** | `POST` | `/api/v1/sales-contracts/{id}/actions/release` | Release order products to shop floor | `ORDER_SC_RELEASE` | `ReleaseOrderRequestDTO` | `SalesContractDetailDTO` | Open (C-2, C-3) |
 | **PLANNING** | `GET` | `/api/v1/process-templates` | List process routing templates | `PLANNING_TEMPLATE_VIEW` | None | `PageResponse<ProcessTemplateSummaryDTO>` | None |

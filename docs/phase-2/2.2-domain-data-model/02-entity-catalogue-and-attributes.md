@@ -21,7 +21,7 @@ This document provides the exhaustive Entity Catalogue for the Velan Production 
 
 #### 2.1 Entity: `purchase_orders`
 * **Owning Module:** `order`
-* **Business Purpose:** Represents the overarching commercial purchase order from the customer (e.g., Shell Global, Saudi Aramco), grouping one or more production Sales Contracts.
+* **Business Purpose:** Represents the overarching commercial purchase order from the customer (e.g., Shell Global, Saudi Aramco), grouping one or more production Size Cards.
 * **Attributes:**
 
 | Attribute | Data Type | Nullable | Key / Constraint | Description & Business Meaning |
@@ -33,7 +33,7 @@ This document provides the exhaustive Entity Catalogue for the Velan Production 
 | `delivery_due_date`| `DATE` | Yes | - | Customer's contractual required delivery date. |
 | `status` | `VARCHAR(50)` | No | CHECK | Current state (`ACTIVE`, `COMPLETED`, `CANCELLED`). |
 
-#### 2.2 Entity: `subcontracts` (Sales Contracts / SC)
+#### 2.2 Entity: `subcontracts` (Size Cards / SC)
 * **Owning Module:** `order`
 * **Business Purpose:** Represents the commercial manufacturing order header received from RM (V-SMART). Can contain one or multiple manufactured products (`subcontract_products`).
 * **Attributes:**
@@ -56,7 +56,7 @@ This document provides the exhaustive Entity Catalogue for the Velan Production 
 | Attribute | Data Type | Nullable | Key / Constraint | Description & Business Meaning |
 | :--- | :--- | :--- | :--- | :--- |
 | `id` | `UUID` | No | PK | Internal system identifier. |
-| `sc_id` | `UUID` | No | FK (`subcontracts.id`), INDEX | Parent Sales Contract header. |
+| `sc_id` | `UUID` | No | FK (`subcontracts.id`), INDEX | Parent Size Card header. |
 | `line_number` | `INTEGER` | No | UNIQUE with `sc_id` | 1-indexed contract line item number (`1, 2, 3...`) within the SC header. |
 | `rm_line_item_id` | `VARCHAR(100)` | Yes | - | External line-item identifier provided by RM (V-SMART). |
 | `product_id` | `UUID` | No | FK (`products.id`), INDEX | Specific manufactured catalog product ordered. |
@@ -226,7 +226,7 @@ This document provides the exhaustive Entity Catalogue for the Velan Production 
 | Attribute | Data Type | Nullable | Key / Constraint | Description & Business Meaning |
 | :--- | :--- | :--- | :--- | :--- |
 | `id` | `UUID` | No | PK | Internal system identifier. |
-| `sc_id` | `UUID` | No | FK (`subcontracts.id`), INDEX | Originating Sales Contract. |
+| `sc_id` | `UUID` | No | FK (`subcontracts.id`), INDEX | Originating Size Card. |
 | `sc_product_id` | `UUID` | No | FK (`subcontract_products.id`), INDEX | Specific SC Product line item. Material readiness derived from here. |
 | `assembled_set_id` | `UUID` | No | FK (`assembled_sets.id`), INDEX | **Deterministic Parent Set.** Bound at SC intake. |
 | `set_sequence_number`| `INTEGER` | No | INDEX | Set index (`1, 2, 3...`) within the SC product. |
@@ -683,7 +683,7 @@ This document provides the exhaustive Entity Catalogue for the Velan Production 
 
 #### 11.2 Entity: `import_records`
 * **Owning Module:** `order`
-* **Business Purpose:** Tracks batch imports of Sales Contracts, tolerance sheets, or provisional manual contract intakes.
+* **Business Purpose:** Tracks batch imports of Size Cards, tolerance sheets, or provisional manual contract intakes.
 * **Attributes:**
 
 | Attribute | Data Type | Nullable | Key / Constraint | Description & Business Meaning |

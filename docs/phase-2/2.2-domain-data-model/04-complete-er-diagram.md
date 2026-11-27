@@ -358,7 +358,7 @@ erDiagram
 ### 2. ER Diagram Walkthrough by Domain Cluster
 
 #### Cluster 1: Commercial Order & Hierarchy
-* **`purchase_orders` → `subcontracts` → `subcontract_products` → `products`:** Groups client purchase orders into specific Sales Contracts. An SC can contain one or multiple manufactured product line items (`subcontract_products`), uniquely identified by `line_number` (`UNIQUE (sc_id, line_number)`). This allows the same catalog product (`product_id`) to appear on multiple distinct lines within an SC with different target quantities, specifications, or delivery schedules.
+* **`purchase_orders` → `subcontracts` → `subcontract_products` → `products`:** Groups client purchase orders into specific Size Cards. An SC can contain one or multiple manufactured product line items (`subcontract_products`), uniquely identified by `line_number` (`UNIQUE (sc_id, line_number)`). This allows the same catalog product (`product_id`) to appear on multiple distinct lines within an SC with different target quantities, specifications, or delivery schedules.
 * **`subcontracts` → `sc_revisions`:** Captures contract amendments and quantity revisions emitted from RM V-SMART without losing baseline parameters.
 
 #### Cluster 2: Engineering & Bill of Materials

@@ -116,7 +116,7 @@ Output: Updated status of subcontracts header
 
 ### 3. Comprehensive State Transition Matrices
 
-#### 3.1 Transition Matrix 1: Sales Contract (SC) Header Lifecycle (`subcontracts`)
+#### 3.1 Transition Matrix 1: Size Card (SC) Header Lifecycle (`subcontracts`)
 
 | Transition ID | Source State | Target State | Triggering Event | Actor / Role | Required Validations & Guard Conditions | Resulting Database Changes & Emitted Events |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
