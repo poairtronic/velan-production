@@ -1,8 +1,17 @@
 # Local development profile configuration (safe defaults; no default secrets)
 spring:
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration
+      - org.springframework.boot.flyway.autoconfigure.FlywayAutoConfiguration
   datasource:
     url: ${DATABASE_URL:}
     username: ${DB_USER:}
+    password: ${DB_PASSWORD:}
+  flyway:
+    enabled: false
+    url: ${DATABASE_DIRECT_URL:}
+    user: ${DB_USER:}
     password: ${DB_PASSWORD:}
 
 app:
