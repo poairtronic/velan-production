@@ -21,7 +21,7 @@ class MigrationTests {
 
     private static final List<String> EXPECTED_TABLES = List.of(
             "files", "audit_logs", "shedlock", "idempotency_keys",
-            "departments", "sections", "roles", "users", "user_roles",
+            "departments", "sections", "roles", "role_permissions", "users", "user_roles",
             "user_permission_overrides", "user_sections",
             "parameters", "parameter_options", "checklists", "checklist_parameters",
             "operations", "operation_parameters", "operation_checklists"
@@ -126,6 +126,21 @@ class MigrationTests {
                     assertThrows(SQLException.class, () -> st.execute(
                             "INSERT INTO checklist_parameters (id, checklist_id, parameter_id, position) "
                             + "VALUES ('" + UUID.randomUUID() + "', '" + clId + "', '" + selParamId + "', 2)"));
+
+                    // 7. STATIC NUMERIC parameter without expected_numeric rejected
+                    assertThrows(SQLException.class, () -> st.execute(
+                            "INSERT INTO parameters (id, code, name, kind, data_type) "
+                            + "VALUES ('" + UUID.randomUUID() + "', 'P_NUM_NULL', 'NumNull', 'STATIC', 'NUMERIC')"));
+
+                    // 8. expected_option_id belonging to another parameter rejected
+                    UUID otherSelParamId = UUID.randomUUID();
+                    UUID otherOptId = UUID.randomUUID();
+                    st.execute("INSERT INTO parameters (id, code, name, kind, data_type) "
+                            + "VALUES ('" + otherSelParamId + "', 'P_SEL2', 'Sel2', 'STATIC', 'SINGLE_SELECT')");
+                    st.execute("INSERT INTO parameter_options (id, parameter_id, code, label, position) "
+                            + "VALUES ('" + otherOptId + "', '" + otherSelParamId + "', 'OPT_B', 'Option B', 1)");
+                    assertThrows(SQLException.class, () -> st.execute(
+                            "UPDATE parameters SET expected_option_id = '" + otherOptId + "' WHERE id = '" + selParamId + "'"));
                 }
             } finally {
                 try (Statement st = conn.createStatement()) {

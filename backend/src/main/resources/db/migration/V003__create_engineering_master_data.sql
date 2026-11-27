@@ -14,6 +14,7 @@ CREATE TABLE parameters (
     created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT chk_param_expected_numeric CHECK (expected_numeric IS NULL OR (kind = 'STATIC' AND data_type = 'NUMERIC')),
+    CONSTRAINT chk_param_static_numeric_requires_expected CHECK ((kind <> 'STATIC' OR data_type <> 'NUMERIC') OR expected_numeric IS NOT NULL),
     CONSTRAINT chk_param_expected_bool CHECK (expected_bool IS NULL OR (kind = 'STATIC' AND data_type = 'YES_NO')),
     CONSTRAINT chk_param_expected_option CHECK (expected_option_id IS NULL OR (kind = 'STATIC' AND data_type = 'SINGLE_SELECT')),
     CONSTRAINT chk_param_dynamic_no_expected CHECK (
@@ -29,14 +30,15 @@ CREATE TABLE parameter_options (
     position     INT NOT NULL CHECK (position >= 1),
     active       BOOLEAN NOT NULL DEFAULT TRUE,
     CONSTRAINT uq_parameter_options_param_code UNIQUE (parameter_id, code),
-    CONSTRAINT uq_parameter_options_param_pos UNIQUE (parameter_id, position)
+    CONSTRAINT uq_parameter_options_param_pos UNIQUE (parameter_id, position),
+    CONSTRAINT uq_parameter_options_param_id UNIQUE (parameter_id, id)
 );
 
 CREATE INDEX idx_parameter_options_parameter_id ON parameter_options (parameter_id);
 
 ALTER TABLE parameters
     ADD CONSTRAINT fk_parameters_expected_option
-    FOREIGN KEY (expected_option_id) REFERENCES parameter_options(id) ON DELETE RESTRICT;
+    FOREIGN KEY (id, expected_option_id) REFERENCES parameter_options(parameter_id, id) ON DELETE RESTRICT;
 
 CREATE INDEX idx_parameters_expected_option_id ON parameters (expected_option_id) WHERE expected_option_id IS NOT NULL;
 

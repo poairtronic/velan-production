@@ -25,6 +25,15 @@ CREATE TABLE roles (
     created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE role_permissions (
+    id         UUID PRIMARY KEY,
+    role_id    UUID NOT NULL REFERENCES roles(id) ON DELETE RESTRICT,
+    permission VARCHAR(128) NOT NULL,
+    CONSTRAINT uq_role_permissions_role_perm UNIQUE (role_id, permission)
+);
+
+CREATE INDEX idx_role_permissions_role_id ON role_permissions (role_id);
+
 CREATE TABLE users (
     id            UUID PRIMARY KEY,
     name          VARCHAR(150) NOT NULL,
