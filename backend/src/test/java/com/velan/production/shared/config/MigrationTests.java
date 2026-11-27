@@ -24,7 +24,12 @@ class MigrationTests {
             "departments", "sections", "roles", "role_permissions", "users", "user_roles",
             "user_permission_overrides", "user_sections",
             "parameters", "parameter_options", "checklists", "checklist_parameters",
-            "operations", "operation_parameters", "operation_checklists"
+            "operations", "operation_parameters", "operation_checklists",
+            "process_templates", "products", "process_template_steps",
+            "purchase_orders", "sc_headers", "sc_products", "sc_revisions",
+            "import_records", "sc_archive_summary",
+            "sc_product_template_steps", "sc_product_node_statuses",
+            "sc_product_step_parameters", "sc_product_dynamic_values", "drawing_documents"
     );
 
     @Test
@@ -61,7 +66,7 @@ class MigrationTests {
                         .load();
 
                 MigrateResult first = flyway.migrate();
-                assertEquals(3, first.migrationsExecuted, "Expected V001, V002, V003 migrations executed");
+                assertEquals(6, first.migrationsExecuted, "Expected V001 through V006 migrations executed");
 
                 for (String table : EXPECTED_TABLES) {
                     try (PreparedStatement ps = conn.prepareStatement(
@@ -141,6 +146,81 @@ class MigrationTests {
                             + "VALUES ('" + otherOptId + "', '" + otherSelParamId + "', 'OPT_B', 'Option B', 1)");
                     assertThrows(SQLException.class, () -> st.execute(
                             "UPDATE parameters SET expected_option_id = '" + otherOptId + "' WHERE id = '" + selParamId + "'"));
+
+                    // 9. Duplicate product name differing only by case or spaces rejected
+                    UUID userId = UUID.randomUUID();
+                    st.execute("INSERT INTO users (id, name, login, password_hash, employee_id, department_id) "
+                            + "VALUES ('" + userId + "', 'U3', 'user3', 'hash3', 'EMP-3', '" + deptId + "')");
+                    UUID prodId = UUID.randomUUID();
+                    st.execute("INSERT INTO products (id, name) VALUES ('" + prodId + "', 'Shaft A')");
+                    assertThrows(SQLException.class, () -> st.execute(
+                            "INSERT INTO products (id, name) VALUES ('" + UUID.randomUUID() + "', '  shaft a ')"));
+
+                    // 10. OPERATION step without operation_id rejected
+                    UUID tplId = UUID.randomUUID();
+                    st.execute("INSERT INTO process_templates (id, code, name) VALUES ('" + tplId + "', 'TPL1', 'Template 1')");
+                    assertThrows(SQLException.class, () -> st.execute(
+                            "INSERT INTO process_template_steps (id, template_id, position, node_type) "
+                            + "VALUES ('" + UUID.randomUUID() + "', '" + tplId + "', 1, 'OPERATION')"));
+
+                    // 11. Duplicate sc_number rejected
+                    UUID sc1Id = UUID.randomUUID();
+                    UUID sc2Id = UUID.randomUUID();
+                    st.execute("INSERT INTO sc_headers (id, sc_number, source, status, created_by) "
+                            + "VALUES ('" + sc1Id + "', 'SC-100', 'MANUAL', 'ACTIVE', '" + userId + "')");
+                    st.execute("INSERT INTO sc_headers (id, sc_number, source, status, created_by) "
+                            + "VALUES ('" + sc2Id + "', 'SC-200', 'MANUAL', 'ACTIVE', '" + userId + "')");
+                    assertThrows(SQLException.class, () -> st.execute(
+                            "INSERT INTO sc_headers (id, sc_number, source, status, created_by) "
+                            + "VALUES ('" + UUID.randomUUID() + "', 'SC-100', 'MANUAL', 'ACTIVE', '" + userId + "')"));
+
+                    // 12. sc_products quantity 0 rejected
+                    assertThrows(SQLException.class, () -> st.execute(
+                            "INSERT INTO sc_products (id, sc_id, product_id, quantity) "
+                            + "VALUES ('" + UUID.randomUUID() + "', '" + sc1Id + "', '" + prodId + "', 0)"));
+
+                    // 13. Duplicate (sc_id, product_id) rejected
+                    UUID scProdId = UUID.randomUUID();
+                    st.execute("INSERT INTO sc_products (id, sc_id, product_id, quantity) "
+                            + "VALUES ('" + scProdId + "', '" + sc1Id + "', '" + prodId + "', 5)");
+                    assertThrows(SQLException.class, () -> st.execute(
+                            "INSERT INTO sc_products (id, sc_id, product_id, quantity) "
+                            + "VALUES ('" + UUID.randomUUID() + "', '" + sc1Id + "', '" + prodId + "', 10)"));
+
+                    // 14. Child row whose sc_id differs from parent's rejected
+                    UUID stepId = UUID.randomUUID();
+                    assertThrows(SQLException.class, () -> st.execute(
+                            "INSERT INTO sc_product_template_steps (id, sc_id, sc_product_id, step_order, node_type) "
+                            + "VALUES ('" + stepId + "', '" + sc2Id + "', '" + scProdId + "', 1, 'DESIGN')"));
+
+                    st.execute("INSERT INTO sc_product_template_steps (id, sc_id, sc_product_id, step_order, node_type) "
+                            + "VALUES ('" + stepId + "', '" + sc1Id + "', '" + scProdId + "', 1, 'DESIGN')");
+                    UUID stepParamId = UUID.randomUUID();
+                    st.execute("INSERT INTO sc_product_step_parameters (id, sc_id, sc_product_id, snapshot_step_id, code, name, kind, data_type, param_order) "
+                            + "VALUES ('" + stepParamId + "', '" + sc1Id + "', '" + scProdId + "', '" + stepId + "', 'P1', 'Param 1', 'DYNAMIC', 'NUMERIC', 1)");
+
+                    // 15. Dynamic value with min > max rejected
+                    assertThrows(SQLException.class, () -> st.execute(
+                            "INSERT INTO sc_product_dynamic_values (id, sc_id, sc_product_id, snapshot_step_id, step_parameter_id, min_value, max_value, target_value, updated_by) "
+                            + "VALUES ('" + UUID.randomUUID() + "', '" + sc1Id + "', '" + scProdId + "', '" + stepId + "', '" + stepParamId + "', 10.0, 5.0, 7.5, '" + userId + "')"));
+
+                    // 16. Duplicate (snapshot_step_id, step_parameter_id) rejected
+                    st.execute("INSERT INTO sc_product_dynamic_values (id, sc_id, sc_product_id, snapshot_step_id, step_parameter_id, min_value, max_value, target_value, updated_by) "
+                            + "VALUES ('" + UUID.randomUUID() + "', '" + sc1Id + "', '" + scProdId + "', '" + stepId + "', '" + stepParamId + "', 5.0, 10.0, 7.5, '" + userId + "')");
+                    assertThrows(SQLException.class, () -> st.execute(
+                            "INSERT INTO sc_product_dynamic_values (id, sc_id, sc_product_id, snapshot_step_id, step_parameter_id, min_value, max_value, target_value, updated_by) "
+                            + "VALUES ('" + UUID.randomUUID() + "', '" + sc1Id + "', '" + scProdId + "', '" + stepId + "', '" + stepParamId + "', 5.0, 10.0, 7.5, '" + userId + "')"));
+
+                    // 17 & 18. PRODUCT_DRAWING with sc_id rejected, SC_DRAWING without sc_id rejected
+                    UUID fileId = UUID.randomUUID();
+                    st.execute("INSERT INTO files (id, storage_key, file_name, content_type, size_bytes, checksum_sha256, uploaded_by) "
+                            + "VALUES ('" + fileId + "', 'k1', 'd.pdf', 'application/pdf', 100, '" + "a".repeat(64) + "', '" + userId + "')");
+                    assertThrows(SQLException.class, () -> st.execute(
+                            "INSERT INTO drawing_documents (id, sc_id, product_id, kind, file_id, created_by) "
+                            + "VALUES ('" + UUID.randomUUID() + "', '" + sc1Id + "', '" + prodId + "', 'PRODUCT_DRAWING', '" + fileId + "', '" + userId + "')"));
+                    assertThrows(SQLException.class, () -> st.execute(
+                            "INSERT INTO drawing_documents (id, product_id, kind, file_id, created_by) "
+                            + "VALUES ('" + UUID.randomUUID() + "', '" + prodId + "', 'SC_DRAWING', '" + fileId + "', '" + userId + "')"));
                 }
             } finally {
                 try (Statement st = conn.createStatement()) {
