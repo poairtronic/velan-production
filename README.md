@@ -156,3 +156,9 @@ From the repository root:
 
 ### Git Workflow Rule
 - **PR-only to `main`:** Direct commits and direct pushes to `main` are forbidden. Every change must go through a topic branch, Pull Request, CI pass, and Squash Merge (`docs/phase-3/3.8-quality-process/02-git-workflow-and-release.md`).
+
+### Frontend Environment Variables (Phase 6.3)
+- `VITE_API_BASE_URL` (required in production builds; dev mode falls back to `http://localhost:8080/api/v1` from `frontend/.env.example`).
+- Display timezone is fixed to `Asia/Kolkata` in `frontend/src/lib/env.ts`.
+- **Run dev:** `cd frontend && npm run dev`
+- **Build production:** `cd frontend && VITE_API_BASE_URL=https://<api-host>/api/v1 npm run build`
