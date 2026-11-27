@@ -5,6 +5,8 @@
 spring:
   application:
     name: velan-production-backend
+  profiles:
+    default: local
 
 server:
   port: 8080
