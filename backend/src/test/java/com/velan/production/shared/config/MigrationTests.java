@@ -71,7 +71,7 @@ class MigrationTests {
                         .load();
 
                 MigrateResult first = flyway.migrate();
-                assertEquals(12, first.migrationsExecuted, "Expected V001 through V012 migrations executed");
+                assertEquals(15, first.migrationsExecuted, "Expected V001 through V015 migrations executed");
 
                 for (String table : EXPECTED_TABLES) {
                     try (PreparedStatement ps = conn.prepareStatement(
@@ -329,6 +329,126 @@ class MigrationTests {
                             + "VALUES ('" + UUID.randomUUID() + "', '" + userId + "', 'INFO', 'Title', 'Body', 'SC', '" + ghostScId + "', '" + ghostScId + "')");
                     st.execute("INSERT INTO outbox_events (id, aggregate_type, aggregate_id, event_type, payload, status, sc_id) "
                             + "VALUES ('" + UUID.randomUUID() + "', 'QC_EXCEPTION', '" + excId + "', 'CREATED', '{}'::jsonb, 'PENDING', '" + ghostScId + "')");
+
+                    // 32. Role seed check: 6 roles, >= 1 permission each, 0 users in fresh DB (before test users)
+                    try (ResultSet rsRoles = st.executeQuery("SELECT COUNT(*) FROM roles")) {
+                        assertTrue(rsRoles.next());
+                        assertEquals(6, rsRoles.getInt(1), "Expected 6 seeded roles");
+                    }
+                    try (ResultSet rsPerms = st.executeQuery(
+                            "SELECT COUNT(*) FROM roles r WHERE NOT EXISTS (SELECT 1 FROM role_permissions rp WHERE rp.role_id = r.id)")) {
+                        assertTrue(rsPerms.next());
+                        assertEquals(0, rsPerms.getInt(1), "Every seeded role must have at least one permission");
+                    }
+
+                    // 33. Guard test: every table with sc_id must be in PURGED_SC_TABLES or EXEMPT_SC_TABLES
+                    List<String> purgedScTables = List.of(
+                            "measurement_values", "qc_inspections", "pm_dispositions",
+                            "piece_replacement_lineage", "qc_exceptions", "operator_values",
+                            "piece_events", "piece_operations", "pieces",
+                            "sc_product_dynamic_values", "sc_product_step_parameters",
+                            "sc_product_node_statuses", "sc_product_template_steps",
+                            "drawing_documents", "vendor_dc_trackers", "sc_revisions",
+                            "import_records", "sc_products", "files"
+                    );
+                    List<String> exemptScTables = List.of(
+                            "audit_logs", "sc_archive_summary", "user_notifications",
+                            "outbox_events", "rm_sync_history"
+                    );
+                    try (ResultSet rsScCols = st.executeQuery(
+                            "SELECT table_name FROM information_schema.columns WHERE table_schema = '" + schema + "' AND column_name = 'sc_id'")) {
+                        while (rsScCols.next()) {
+                            String tbl = rsScCols.getString(1);
+                            assertTrue(purgedScTables.contains(tbl) || exemptScTables.contains(tbl),
+                                    "Table with sc_id is neither purged nor exempt: " + tbl);
+                        }
+                    }
+
+                    // 34. Complete SC graph + purge refusals + purge_sc execution
+                    UUID poHdrId = UUID.randomUUID();
+                    st.execute("INSERT INTO purchase_orders (id, po_number, source, created_by) "
+                            + "VALUES ('" + poHdrId + "', 'PO-1', 'MANUAL', '" + userId + "')");
+                    st.execute("UPDATE sc_headers SET po_id = '" + poHdrId + "' WHERE id = '" + sc1Id + "'");
+
+                    // Refuse purge when SC is not ARCHIVED
+                    assertThrows(SQLException.class, () -> st.execute("SELECT * FROM purge_sc('" + sc1Id + "')"));
+
+                    // Refuse purge when ARCHIVED without PURGE_APPROVED summary
+                    st.execute("UPDATE sc_headers SET status = 'ARCHIVED' WHERE id = '" + sc1Id + "'");
+                    assertThrows(SQLException.class, () -> st.execute("SELECT * FROM purge_sc('" + sc1Id + "')"));
+
+                    // Populate remaining SC-owned rows (submitted operator_value, event, qc, disposition, files, drawing, revision, import, node status, scoped_piece_id)
+                    UUID scFileId = UUID.randomUUID();
+                    UUID archiveExcelId = UUID.randomUUID();
+                    UUID archivePdfId = UUID.randomUUID();
+                    st.execute("INSERT INTO files (id, sc_id, storage_key, file_name, content_type, size_bytes, checksum_sha256, uploaded_by) "
+                            + "VALUES ('" + scFileId + "', '" + sc1Id + "', 'sc1/sig.png', 'sig.png', 'image/png', 42, '" + "b".repeat(64) + "', '" + userId + "')");
+                    st.execute("INSERT INTO files (id, sc_id, storage_key, file_name, content_type, size_bytes, checksum_sha256, uploaded_by) "
+                            + "VALUES ('" + archiveExcelId + "', NULL, 'arch/sc1.xlsx', 'sc1.xlsx', 'application/vnd.ms-excel', 100, '" + "c".repeat(64) + "', '" + userId + "')");
+                    st.execute("INSERT INTO files (id, sc_id, storage_key, file_name, content_type, size_bytes, checksum_sha256, uploaded_by) "
+                            + "VALUES ('" + archivePdfId + "', NULL, 'arch/sc1.pdf', 'sc1.pdf', 'application/pdf', 200, '" + "d".repeat(64) + "', '" + userId + "')");
+
+                    st.execute("INSERT INTO drawing_documents (id, product_id, kind, file_id, created_by) "
+                            + "VALUES ('" + UUID.randomUUID() + "', '" + prodId + "', 'PRODUCT_DRAWING', '" + fileId + "', '" + userId + "')");
+                    st.execute("INSERT INTO drawing_documents (id, sc_id, product_id, sc_product_id, kind, file_id, created_by) "
+                            + "VALUES ('" + UUID.randomUUID() + "', '" + sc1Id + "', '" + prodId + "', '" + scProdId + "', 'SC_DRAWING', '" + scFileId + "', '" + userId + "')");
+                    st.execute("INSERT INTO sc_product_node_statuses (id, sc_id, sc_product_id, snapshot_step_id, node_status, updated_by) "
+                            + "VALUES ('" + UUID.randomUUID() + "', '" + sc1Id + "', '" + scProdId + "', '" + stepId + "', 'DONE', '" + userId + "')");
+                    st.execute("UPDATE sc_product_template_steps SET scoped_piece_id = '" + piece1Id + "' WHERE id = '" + stepId + "'");
+                    st.execute("INSERT INTO operator_values (id, sc_id, piece_id, piece_operation_id, snapshot_step_id, step_parameter_id, status, val_numeric, judged_target, result, submitted_by, submitted_at) "
+                            + "VALUES ('" + UUID.randomUUID() + "', '" + sc1Id + "', '" + piece1Id + "', '" + poId + "', '" + stepId + "', '" + stepParamId + "', 'SUBMITTED', 7.5, 7.5, 'PASS', '" + userId + "', NOW())");
+                    st.execute("INSERT INTO piece_events (id, sc_id, piece_id, piece_operation_id, event_type, actor_id) "
+                            + "VALUES ('" + UUID.randomUUID() + "', '" + sc1Id + "', '" + piece1Id + "', '" + poId + "', 'COMPLETED', '" + userId + "')");
+                    UUID qcInspId = UUID.randomUUID();
+                    st.execute("INSERT INTO qc_inspections (id, sc_id, piece_id, piece_operation_id, inspector_id, decision) "
+                            + "VALUES ('" + qcInspId + "', '" + sc1Id + "', '" + piece1Id + "', '" + poId + "', '" + userId + "', 'PASSED')");
+                    st.execute("INSERT INTO measurement_values (id, sc_id, qc_inspection_id, piece_id, piece_operation_id, snapshot_step_id, step_parameter_id, val_numeric, judged_target, result, recorded_by) "
+                            + "VALUES ('" + UUID.randomUUID() + "', '" + sc1Id + "', '" + qcInspId + "', '" + piece1Id + "', '" + poId + "', '" + stepId + "', '" + stepParamId + "', 7.5, 7.5, 'PASS', '" + userId + "')");
+                    st.execute("INSERT INTO pm_dispositions (id, sc_id, qc_exception_id, piece_id, piece_operation_id, disposition, reason, decided_by) "
+                            + "VALUES ('" + UUID.randomUUID() + "', '" + sc1Id + "', '" + excId + "', '" + piece1Id + "', '" + poId + "', 'CONTINUE', 'ok', '" + userId + "')");
+                    st.execute("INSERT INTO sc_revisions (id, sc_id, revision_no, summary, created_by) "
+                            + "VALUES ('" + UUID.randomUUID() + "', '" + sc1Id + "', 1, 'rev1', '" + userId + "')");
+                    st.execute("INSERT INTO import_records (id, sc_id, source, imported_by) "
+                            + "VALUES ('" + UUID.randomUUID() + "', '" + sc1Id + "', 'EXCEL', '" + userId + "')");
+                    st.execute("INSERT INTO sc_archive_summary (id, sc_id, sc_number, status, excel_file_id, pdf_file_id, piece_count, operation_count, value_count, approved_by, approved_at) "
+                            + "VALUES ('" + UUID.randomUUID() + "', '" + sc1Id + "', 'SC-100', 'PURGE_APPROVED', '" + archiveExcelId + "', '" + archivePdfId + "', 3, 1, 1, '" + userId + "', NOW())");
+
+                    // Execute purge_sc
+                    st.execute("SELECT * FROM purge_sc('" + sc1Id + "')");
+
+                    // Verify 0 rows remain with sc_id = sc1Id in all purged tables + sc_headers
+                    for (String tbl : purgedScTables) {
+                        try (ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM " + tbl + " WHERE sc_id = '" + sc1Id + "'")) {
+                            assertTrue(rs.next());
+                            assertEquals(0, rs.getInt(1), "Expected 0 rows for purged SC in " + tbl);
+                        }
+                    }
+                    try (ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM sc_headers WHERE id = '" + sc1Id + "'")) {
+                        assertTrue(rs.next());
+                        assertEquals(0, rs.getInt(1));
+                    }
+
+                    // Verify kept records & STORAGE_DELETE outbox event
+                    try (ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM purchase_orders WHERE id = '" + poHdrId + "'")) {
+                        assertTrue(rs.next());
+                        assertEquals(1, rs.getInt(1));
+                    }
+                    try (ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM audit_logs WHERE sc_id = '" + sc1Id + "' AND action = 'SC_PURGED'")) {
+                        assertTrue(rs.next());
+                        assertEquals(1, rs.getInt(1));
+                    }
+                    try (ResultSet rs = st.executeQuery("SELECT status FROM sc_archive_summary WHERE sc_id = '" + sc1Id + "'")) {
+                        assertTrue(rs.next());
+                        assertEquals("PURGED", rs.getString(1));
+                    }
+                    try (ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM drawing_documents WHERE kind = 'PRODUCT_DRAWING'")) {
+                        assertTrue(rs.next());
+                        assertEquals(1, rs.getInt(1));
+                    }
+                    try (ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM outbox_events WHERE sc_id = '" + sc1Id + "' AND event_type = 'STORAGE_DELETE'")) {
+                        assertTrue(rs.next());
+                        assertEquals(1, rs.getInt(1));
+                    }
                 }
             } finally {
                 try (Statement st = conn.createStatement()) {
