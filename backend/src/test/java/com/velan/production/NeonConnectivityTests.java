@@ -5,6 +5,7 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -30,14 +31,13 @@ public class NeonConnectivityTests {
             dbUrl = System.getProperty("DATABASE_URL");
         }
 
-        if (dbUrl == null || dbUrl.isBlank() || dbUrl.contains("USER:PASSWORD") || dbUrl.contains("placeholder") || dbUrl.contains("HOST")) {
-            System.out.println("================================================================================");
-            System.out.println("[PHASE 4.4 STATUS: BLOCKED ON OWNER CREDENTIALS]");
-            System.out.println("DATABASE_URL is not configured with live Neon credentials.");
-            System.out.println("Awaiting project owner to create the dedicated 'velan-production' Neon project.");
-            System.out.println("================================================================================");
-            return;
-        }
+        boolean hasCredentials = dbUrl != null && !dbUrl.isBlank()
+                && !dbUrl.contains("USER:PASSWORD")
+                && !dbUrl.contains("placeholder")
+                && !dbUrl.contains("HOST");
+        Assumptions.assumeTrue(
+                hasCredentials,
+                "DATABASE_URL is not configured with live Neon credentials; skipping Neon connectivity test.");
 
         // Normalize JDBC protocol prefix if necessary
         String jdbcUrl = dbUrl;
