@@ -29,7 +29,9 @@ class MigrationTests {
             "purchase_orders", "sc_headers", "sc_products", "sc_revisions",
             "import_records", "sc_archive_summary",
             "sc_product_template_steps", "sc_product_node_statuses",
-            "sc_product_step_parameters", "sc_product_dynamic_values", "drawing_documents"
+            "sc_product_step_parameters", "sc_product_dynamic_values", "drawing_documents",
+            "machines", "operation_machines", "pieces", "piece_operations",
+            "piece_events", "operator_values", "qc_inspections", "measurement_values"
     );
 
     @Test
@@ -66,7 +68,7 @@ class MigrationTests {
                         .load();
 
                 MigrateResult first = flyway.migrate();
-                assertEquals(6, first.migrationsExecuted, "Expected V001 through V006 migrations executed");
+                assertEquals(8, first.migrationsExecuted, "Expected V001 through V008 migrations executed");
 
                 for (String table : EXPECTED_TABLES) {
                     try (PreparedStatement ps = conn.prepareStatement(
@@ -221,6 +223,59 @@ class MigrationTests {
                     assertThrows(SQLException.class, () -> st.execute(
                             "INSERT INTO drawing_documents (id, product_id, kind, file_id, created_by) "
                             + "VALUES ('" + UUID.randomUUID() + "', '" + prodId + "', 'SC_DRAWING', '" + fileId + "', '" + userId + "')"));
+
+                    // 19. Duplicate serial_number rejected
+                    UUID piece1Id = UUID.randomUUID();
+                    st.execute("INSERT INTO pieces (id, sc_id, sc_product_id, serial_number, status) "
+                            + "VALUES ('" + piece1Id + "', '" + sc1Id + "', '" + scProdId + "', 'SN-001', 'CREATED')");
+                    assertThrows(SQLException.class, () -> st.execute(
+                            "INSERT INTO pieces (id, sc_id, sc_product_id, serial_number, status) "
+                            + "VALUES ('" + UUID.randomUUID() + "', '" + sc1Id + "', '" + scProdId + "', 'SN-001', 'CREATED')"));
+
+                    // 20. Child row whose sc_id differs from parent's rejected (piece_operations -> pieces)
+                    UUID poId = UUID.randomUUID();
+                    assertThrows(SQLException.class, () -> st.execute(
+                            "INSERT INTO piece_operations (id, sc_id, piece_id, snapshot_step_id, attempt_no, status) "
+                            + "VALUES ('" + poId + "', '" + sc2Id + "', '" + piece1Id + "', '" + stepId + "', 1, 'PENDING')"));
+
+                    // 21. Duplicate (piece_id, snapshot_step_id, attempt_no) rejected
+                    st.execute("INSERT INTO piece_operations (id, sc_id, piece_id, snapshot_step_id, attempt_no, status) "
+                            + "VALUES ('" + poId + "', '" + sc1Id + "', '" + piece1Id + "', '" + stepId + "', 1, 'PENDING')");
+                    assertThrows(SQLException.class, () -> st.execute(
+                            "INSERT INTO piece_operations (id, sc_id, piece_id, snapshot_step_id, attempt_no, status) "
+                            + "VALUES ('" + UUID.randomUUID() + "', '" + sc1Id + "', '" + piece1Id + "', '" + stepId + "', 1, 'PENDING')"));
+
+                    // 22. SUBMITTED value with two typed values rejected
+                    assertThrows(SQLException.class, () -> st.execute(
+                            "INSERT INTO operator_values (id, sc_id, piece_id, piece_operation_id, snapshot_step_id, step_parameter_id, status, val_numeric, val_bool, judged_target, result, submitted_by, submitted_at) "
+                            + "VALUES ('" + UUID.randomUUID() + "', '" + sc1Id + "', '" + piece1Id + "', '" + poId + "', '" + stepId + "', '" + stepParamId + "', 'SUBMITTED', 5.0, true, 5.0, 'PASS', '" + userId + "', NOW())"));
+
+                    // 23. SUBMITTED value without result rejected
+                    assertThrows(SQLException.class, () -> st.execute(
+                            "INSERT INTO operator_values (id, sc_id, piece_id, piece_operation_id, snapshot_step_id, step_parameter_id, status, val_numeric, judged_target, submitted_by, submitted_at) "
+                            + "VALUES ('" + UUID.randomUUID() + "', '" + sc1Id + "', '" + piece1Id + "', '" + poId + "', '" + stepId + "', '" + stepParamId + "', 'SUBMITTED', 5.0, 5.0, '" + userId + "', NOW())"));
+
+                    // 24. Allow DRAFT -> SUBMITTED, then reject UPDATE and DELETE without purge setting
+                    UUID opValId = UUID.randomUUID();
+                    st.execute("INSERT INTO operator_values (id, sc_id, piece_id, piece_operation_id, snapshot_step_id, step_parameter_id, status, val_numeric) "
+                            + "VALUES ('" + opValId + "', '" + sc1Id + "', '" + piece1Id + "', '" + poId + "', '" + stepId + "', '" + stepParamId + "', 'DRAFT', 7.5)");
+                    st.execute("UPDATE operator_values SET status = 'SUBMITTED', judged_target = 7.5, result = 'PASS', submitted_by = '" + userId + "', submitted_at = NOW() WHERE id = '" + opValId + "'");
+
+                    assertThrows(SQLException.class, () -> st.execute(
+                            "UPDATE operator_values SET val_numeric = 9.9 WHERE id = '" + opValId + "'"));
+                    assertThrows(SQLException.class, () -> st.execute(
+                            "DELETE FROM operator_values WHERE id = '" + opValId + "'"));
+
+                    // 25. Allow DELETE of SUBMITTED row inside transaction after SET LOCAL velan.purge_active = 'true'
+                    conn.setAutoCommit(false);
+                    try {
+                        st.execute("SET LOCAL velan.purge_active = 'true'");
+                        int deleted = st.executeUpdate("DELETE FROM operator_values WHERE id = '" + opValId + "'");
+                        assertEquals(1, deleted);
+                        conn.commit();
+                    } finally {
+                        conn.setAutoCommit(true);
+                    }
                 }
             } finally {
                 try (Statement st = conn.createStatement()) {
