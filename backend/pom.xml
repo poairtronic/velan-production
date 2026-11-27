@@ -29,6 +29,12 @@
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
+        <!-- Bean Validation for @ConfigurationProperties (Phase 6.2) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+
         <!-- Spring Boot Test Starter for JUnit 5 context-load testing -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
