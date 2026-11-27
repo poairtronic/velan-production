@@ -1,0 +1,4 @@
+# Local development profile configuration (placeholders only; no secrets)
+spring:
+  datasource:
+    url: ${DATABASE_URL:}
