@@ -82,4 +82,80 @@ class ConfigurationPropertiesTests {
             assertNotNull(ctx.getBean(AppProperties.class));
         }
     }
+
+    @Test
+    void prodProfileFailsWithoutDatabaseUrl() {
+        String validSecret = Base64.getEncoder().encodeToString("01234567890123456789012345678901".getBytes());
+        assertThrows(Exception.class, () -> {
+            try (ConfigurableApplicationContext ctx = new SpringApplicationBuilder(VelanProductionApplication.class)
+                    .profiles("prod")
+                    .properties("server.port=0")
+                    .run(
+                            "--app.security.jwt-secret=" + validSecret,
+                            "--app.cors.allowed-origins=https://app.example.com",
+                            "--app.database.url=",
+                            "--app.database.direct-url=jdbc:postgresql://host:5432/db",
+                            "--app.database.username=user",
+                            "--app.database.password=pass")) {
+                assertNotNull(ctx);
+            }
+        });
+    }
+
+    @Test
+    void prodProfileFailsWithoutDatabaseDirectUrl() {
+        String validSecret = Base64.getEncoder().encodeToString("01234567890123456789012345678901".getBytes());
+        assertThrows(Exception.class, () -> {
+            try (ConfigurableApplicationContext ctx = new SpringApplicationBuilder(VelanProductionApplication.class)
+                    .profiles("prod")
+                    .properties("server.port=0")
+                    .run(
+                            "--app.security.jwt-secret=" + validSecret,
+                            "--app.cors.allowed-origins=https://app.example.com",
+                            "--app.database.url=jdbc:postgresql://host-pooler:5432/db",
+                            "--app.database.direct-url=",
+                            "--app.database.username=user",
+                            "--app.database.password=pass")) {
+                assertNotNull(ctx);
+            }
+        });
+    }
+
+    @Test
+    void prodProfileFailsWithoutDbUser() {
+        String validSecret = Base64.getEncoder().encodeToString("01234567890123456789012345678901".getBytes());
+        assertThrows(Exception.class, () -> {
+            try (ConfigurableApplicationContext ctx = new SpringApplicationBuilder(VelanProductionApplication.class)
+                    .profiles("prod")
+                    .properties("server.port=0")
+                    .run(
+                            "--app.security.jwt-secret=" + validSecret,
+                            "--app.cors.allowed-origins=https://app.example.com",
+                            "--app.database.url=jdbc:postgresql://host-pooler:5432/db",
+                            "--app.database.direct-url=jdbc:postgresql://host:5432/db",
+                            "--app.database.username=",
+                            "--app.database.password=pass")) {
+                assertNotNull(ctx);
+            }
+        });
+    }
+
+    @Test
+    void prodProfileFailsWithoutDbPassword() {
+        String validSecret = Base64.getEncoder().encodeToString("01234567890123456789012345678901".getBytes());
+        assertThrows(Exception.class, () -> {
+            try (ConfigurableApplicationContext ctx = new SpringApplicationBuilder(VelanProductionApplication.class)
+                    .profiles("prod")
+                    .properties("server.port=0")
+                    .run(
+                            "--app.security.jwt-secret=" + validSecret,
+                            "--app.cors.allowed-origins=https://app.example.com",
+                            "--app.database.url=jdbc:postgresql://host-pooler:5432/db",
+                            "--app.database.direct-url=jdbc:postgresql://host:5432/db",
+                            "--app.database.username=user",
+                            "--app.database.password=")) {
+                assertNotNull(ctx);
+            }
+        });
+    }
 }
