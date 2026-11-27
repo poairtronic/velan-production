@@ -30,7 +30,7 @@ In accordance with Phase 3 specifications (`docs/phase-3/3.1-technology-stack/`)
 | **Frontend Build Tool** | Vite 6 |
 | **Frontend Language** | TypeScript (strict mode: `noUncheckedIndexedAccess: true`) |
 | **Frontend Styling** | Tailwind CSS |
-| **Database** | PostgreSQL 16 on Neon (pooled `:6543` for runtime, direct `:5432` for Flyway) |
+| **Database** | PostgreSQL 16 on Neon (pooled `-pooler` and direct, both port `:5432`) |
 | **Object Storage** | Cloudflare R2 (S3-compatible API, append-only attachments) |
 | **Deployment Platform** | Render (independent services) |
 | **Local Containerization** | Docker & Docker Compose |

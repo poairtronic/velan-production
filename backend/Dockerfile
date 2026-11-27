@@ -12,12 +12,12 @@ COPY .mvn/ .mvn/
 COPY mvnw pom.xml ./
 RUN chmod +x mvnw
 
-# Download dependencies offline where possible
-RUN ./mvnw dependency:go-offline -B || true
+# Download dependencies offline
+RUN ./mvnw dependency:go-offline -B
 
 # Copy source code and build executable jar (skipping live DB tests)
 COPY src/ src/
-RUN ./mvnw clean package -DskipTests -B
+RUN ./mvnw package -DskipTests -B
 
 # Stage 2: Minimal JRE 21 runtime container
 FROM eclipse-temurin:21-jre-jammy AS runtime
