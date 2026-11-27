@@ -71,7 +71,7 @@ class MigrationTests {
                         .load();
 
                 MigrateResult first = flyway.migrate();
-                assertEquals(15, first.migrationsExecuted, "Expected V001 through V015 migrations executed");
+                assertEquals(16, first.migrationsExecuted, "Expected V001 through V016 migrations executed");
 
                 for (String table : EXPECTED_TABLES) {
                     try (PreparedStatement ps = conn.prepareStatement(
