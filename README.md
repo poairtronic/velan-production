@@ -138,3 +138,21 @@ From the repository root:
 ### Development URLs
 * **Frontend Application:** `http://localhost:5173`
 * **Backend Application:** `http://localhost:8080`
+
+
+---
+
+## 6. Module & Frontend Structure (Phase 5)
+
+### Backend (`backend/src/main/java/com/velan/production/`)
+- **9 Domain Modules:** `iam`, `order`, `engineering`, `execution`, `quality`, `qcexception`, `vendor`, `notification`, `integration`
+  - Each module has: `api/`, `internal/domain/`, `internal/application/`, `internal/infrastructure/`
+- **Shared Kernel:** `shared/` (`audit`, `error`, `id`, `idempotency`, `scheduling`, `security`, `time` — no `api`/`internal` split)
+
+### Frontend (`frontend/src/`)
+- `app/App.tsx`, `routes/`, `components/ui/`, `hooks/`, `lib/{api,utils}/`, `types/`, `styles/index.css`
+- `features/{iam,order,engineering,execution,quality,qcexception,vendor,notification,integration}/index.ts`
+- Path alias `@/*` maps to `frontend/src/*`.
+
+### Git Workflow Rule
+- **PR-only to `main`:** Direct commits and direct pushes to `main` are forbidden. Every change must go through a topic branch, Pull Request, CI pass, and Squash Merge (`docs/phase-3/3.8-quality-process/02-git-workflow-and-release.md`).
