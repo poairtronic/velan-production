@@ -28,13 +28,13 @@
 
 ### B. Approved Project Documentation Reviewed
 * **Phase 1 Requirements:** [`docs/phase-1/00_DECISION_LOG.md`](../phase-1/00_DECISION_LOG.md), [`02_SRS.md`](../phase-1/02_SRS.md), [`08_Business_Rules.md`](../phase-1/08_Business_Rules.md), [`15_Application_Master_Plan.md`](../phase-1/15_Application_Master_Plan.md).
-* **Phase 2 System Design:** [`docs/phase-2/2.1-system-architecture/`](../phase-2/2.1-system-architecture/) (ADRs 001–008, independent Render services).
+* **Phase 2 System Design:** [`docs/phase-2/2.1-system-architecture/`](../phase-2/2.1-system-architecture/) (`ADR-01`–`ADR-08`, independent Render services).
 * **Phase 3 Standards:**
-  * [`docs/phase-3/3.1-technology-stack/01-technology-stack.md`](../phase-3/3.1-technology-stack/01-technology-stack.md)
-  * [`docs/phase-3/3.1a-environment-and-deployment/01-environments-and-deployment-strategy.md`](../phase-3/3.1a-environment-and-deployment/01-environments-and-deployment-strategy.md)
-  * [`docs/phase-3/3.2-backend-standard/01-modular-monolith-package-structure.md`](../phase-3/3.2-backend-standard/01-modular-monolith-package-structure.md)
+  * [`docs/phase-3/3.1-technology-specification/01-technology-stack-and-versions.md`](../phase-3/3.1-technology-specification/01-technology-stack-and-versions.md)
+  * [`docs/phase-3/3.1-technology-specification/02-environments-and-hosting.md`](../phase-3/3.1-technology-specification/02-environments-and-hosting.md)
+  * [`docs/phase-3/3.2-backend-standards/01-module-structure-and-dependency-rules.md`](../phase-3/3.2-backend-standards/01-module-structure-and-dependency-rules.md)
   * [`docs/phase-3/3.6-frontend-standards/01-project-structure-and-conventions.md`](../phase-3/3.6-frontend-standards/01-project-structure-and-conventions.md)
-  * [`docs/phase-3/3.8-quality-process/02-git-workflow-and-branching.md`](../phase-3/3.8-quality-process/02-git-workflow-and-branching.md)
+  * [`docs/phase-3/3.8-quality-process/02-git-workflow-and-release.md`](../phase-3/3.8-quality-process/02-git-workflow-and-release.md)
 * **Phase 4.0 Pre-flight Audit Report:** [`docs/phase-4/Phase_4.0_Preflight_Audit_Report.md`](Phase_4.0_Preflight_Audit_Report.md).
 
 ---
@@ -44,7 +44,7 @@
 | File Path | Purpose |
 |---|---|
 | `.gitignore` | Root Git ignore rules covering Java/Maven (`target/`), Node/Vite (`node_modules/`, `dist/`), environment secrets (`.env*`, preserving `!.env.example`), IDEs (`.idea/`, `.vscode/*`), OS files, logs, and coverage reports. |
-| `.env.example` | Minimal environment template containing placeholder keys for Backend (`PORT`, `SPRING_PROFILES_ACTIVE`, Neon pooled `DATABASE_URL`, direct `DATABASE_DIRECT_URL`) and Frontend (`VITE_API_BASE_URL`). Contains zero real secrets. |
+| `.env.example` | Minimal environment template containing placeholder keys for Backend (`PORT`, `SPRING_PROFILES_ACTIVE`, Neon pooled `DATABASE_URL`, direct `DATABASE_DIRECT_URL`) and Frontend (`VITE_API_BASE_URL`). Contains zero real secrets. *(Phase 4.7 note: `.env.example` still contains an erroneous `:6543` port in `DATABASE_URL`; Neon uses `:5432` for both `-pooler` and direct endpoints—flagged outside `docs/` for cleanup.)* |
 | `backend/.gitkeep` | Empty placeholder tracking the `/backend` directory for the upcoming Java 21 / Spring Boot 3.4.x starter in Phase 4.2. |
 | `frontend/.gitkeep` | Empty placeholder tracking the `/frontend` directory for the upcoming React 19 / Vite 6 starter in Phase 4.3. |
 | `docs/phase-4/Phase-4.1-Completion-Report.md` | This formal completion report. |

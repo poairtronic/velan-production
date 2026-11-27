@@ -93,8 +93,8 @@ velan-production/
 | `accidental-data-loss-prevention` | `C:\Users\Admin\.gemini\config\skills\accidental-data-loss-prevention\SKILL.md` | Safety enforcement against destructive file/database operations | READ COMPLETELY |
 
 ### 3. Missing or Inaccessible Skills
-- **Dedicated Spring Boot / Java Backend Skill:** NOT INSTALLED in agent skills catalog. Governed authoritatively by `docs/phase-3/3.1-technology-stack/01-technology-stack.md`, `docs/phase-3/3.2-backend-standard/01-modular-monolith-package-structure.md`, and root `SKILLS.md`.
-- **Dedicated Docker / Containerization Skill:** NOT INSTALLED in agent skills catalog. Governed authoritatively by `docs/phase-3/3.1a-environment-and-deployment/01-environments-and-deployment-strategy.md` and `docs/phase-3/3.8-quality-process/04-definition-of-done.md`.
+- **Dedicated Spring Boot / Java Backend Skill:** NOT INSTALLED in agent skills catalog. Governed authoritatively by `docs/phase-3/3.1-technology-specification/01-technology-stack-and-versions.md`, `docs/phase-3/3.2-backend-standards/01-module-structure-and-dependency-rules.md`, and root `SKILLS.md`.
+- **Dedicated Docker / Containerization Skill:** NOT INSTALLED in agent skills catalog. Governed authoritatively by `docs/phase-3/3.1-technology-specification/02-environments-and-hosting.md`, `04-dependency-and-build-policy.md`, and `docs/phase-3/3.8-quality-process/03-code-review-and-definition-of-done.md`.
 - *Finding:* No invented skills were used. Project-level Phase 3 standards provide complete, prescriptive requirements covering all Java/Spring Boot and Docker implementations.
 
 ---
@@ -105,29 +105,29 @@ velan-production/
 - `docs/phase-1/00_DECISION_LOG.md`: Decisions D-01 through D-19; Open items O-01 through O-12.
 - `docs/phase-1/02_SRS.md`: Functional boundaries, piece-level tracking, material issue gate.
 - `docs/phase-1/06_Role_Matrix.md`: 6 authorized roles (Admin, PM, Designer, Operator, QC, Management).
-- `docs/phase-1/08_Business_Rules.md`: 70 domain business rules.
+- `docs/phase-1/08_Business_Rules.md`: Business rules catalogue `BR-001` through `BR-070` (63 active rules, 7 marked `[REMOVED]` per `D-10`/`O-03`).
 - `docs/phase-1/09_Integration_Specification.md`: Audited RM endpoints and ECR intake schema.
 - `docs/phase-1/10_Acceptance_Criteria.md`: User acceptance criteria and verification expectations.
 - `docs/phase-1/15_Application_Master_Plan.md`: 51-phase development roadmap.
 
 ### 2. Phase 2 Documents Reviewed
-- `docs/phase-2/2.1-system-architecture/`: ADRs 001 to 008; modular monolith, independent Render deployments, Neon PostgreSQL.
+- `docs/phase-2/2.1-system-architecture/`: `ADR-01` to `ADR-08`; modular monolith, independent Render deployments, Neon PostgreSQL.
 - `docs/phase-2/2.2-domain-data-model/`: Relational schema, append-only measurement design, outbox pattern.
 - `docs/phase-2/2.3` to `2.6`: 10 lifecycle state machines.
 
 ### 3. Phase 3 Documents Reviewed
-- `docs/phase-3/3.1-technology-stack/01-technology-stack.md`: Approved technologies and versions.
-- `docs/phase-3/3.1a-environment-and-deployment/01-environments-and-deployment-strategy.md`: Render service models (Web Service for backend, Static Site for frontend), R2, Neon pooling.
-- `docs/phase-3/3.2-backend-standard/01-modular-monolith-package-structure.md`: Backend package structure `com.velan.production`, hexagonal architecture.
-- `docs/phase-3/3.3-database-and-naming-conventions/02-database-design-and-schema-conventions.md`: Neon pooled (port 6543) vs direct (port 5432) connection configuration.
-- `docs/phase-3/3.4-api-standards/01-rest-conventions-and-envelope.md`: REST API envelope `ApiResponse<T>`, RFC 7807 problem details.
+- `docs/phase-3/3.1-technology-specification/01-technology-stack-and-versions.md`: Approved technologies and versions.
+- `docs/phase-3/3.1-technology-specification/02-environments-and-hosting.md` & `03-environment-configuration.md`: Render service models (Web Service for backend, Static Site for frontend), R2, and Neon pooled (`-pooler`) vs direct connection configuration (both on port `5432`).
+- `docs/phase-3/3.2-backend-standards/01-module-structure-and-dependency-rules.md`: Backend package structure `com.velan.production`, modular monolith `api/` vs `internal/` boundaries.
+- `docs/phase-3/3.3-database-and-naming-conventions/02-schema-and-data-type-conventions.md` & `03-flyway-and-migration-standards.md`: PostgreSQL 16 types, non-native enum standard, and Flyway direct compute connection rule (port `5432`).
+- `docs/phase-3/3.4-api-standards/01-rest-conventions-and-envelope.md` & `02-error-handling-and-error-catalogue.md`: REST API envelope `ApiResponse<T>` and standardized `ApiErrorResponse` (`{ code, message, details, timestamp, path, correlationId }`).
 - `docs/phase-3/3.6-frontend-standards/01-project-structure-and-conventions.md`: React 19, Vite 6, TypeScript strict configuration (`noUncheckedIndexedAccess`).
-- `docs/phase-3/3.8-quality-process/01-testing-standards.md` & `04-definition-of-done.md`: Build validation gates.
+- `docs/phase-3/3.8-quality-process/01-testing-standards.md` & `03-code-review-and-definition-of-done.md`: Build validation gates and Definition of Done.
 
 ### 4. Important Architecture Decisions Identified for Phase 4
-- **D-08 / O-FE-01 (Monorepo & Deployment):** Single Git repository with two independent apps: `/backend` and `/frontend`. Backend runs as Render Web Service; Frontend runs as Render Static Site (`dist/`).
-- **D-12 (No External Messaging/Cache):** In-process Caffeine only. Database outbox pattern. No Redis, RabbitMQ, Kafka.
-- **Neon Connection Separation:** Application runtime uses pooled connection (`aws-*-pooler.neon.tech:6543`). Schema migrations (Flyway in Phase 7) require direct connection (`aws-*.neon.tech:5432`). In Phase 4, connectivity verification checks raw connectivity without creating schema or tables.
+- **`O-FE-01` (Monorepo) & `D-13` (Deployment):** Single Git repository with two independent apps: `/backend` and `/frontend`. Backend runs as Render Web Service; Frontend runs as Render Static Site (`dist/`).
+- **`D-13` (No External Messaging/Cache):** In-process Caffeine only. Database outbox pattern. No Redis, RabbitMQ, Kafka.
+- **Neon Connection Separation:** Both pooled and direct Neon endpoints listen on standard port `5432` (corrected in Phase 4.7 from earlier erroneous `:6543` drafts). Application runtime uses the `-pooler` hostname (`ep-<id>-pooler.<region>.aws.neon.tech:5432`, PgBouncer Transaction Mode). Schema migrations (Flyway in Phase 7) require the direct hostname (`ep-<id>.<region>.aws.neon.tech:5432`). In Phase 4, connectivity verification checks raw connectivity without creating schema or tables.
 
 ### 5. Conflicts and Ambiguities Found
 - No new conflicts were introduced.
@@ -178,10 +178,10 @@ The host environment was inspected using CLI checks on Windows:
                          |
            +-------------+-------------+
            |                           |
-           v (:6543 Pooled)            v (:5432 Direct - Flyway)
+           v (:5432 -pooler Pooled)    v (:5432 Direct - Flyway)
 +-------------------------------------------------------------------------+
 |                         Neon PostgreSQL 16                              |
-|   (Runtime Application Pooler :6543  |  Admin/Migration Direct :5432)   |
+|  (Runtime -pooler PgBouncer :5432  |  Admin/Migration Direct :5432)     |
 +-------------------------------------------------------------------------+
 ```
 
@@ -191,7 +191,7 @@ The host environment was inspected using CLI checks on Windows:
    - Backend: Docker/Native Java 21 on Render Web Service.
    - Frontend: Node build (`dist/`) published to Render Static Site.
 3. **Communication:** Frontend communicates with backend exclusively over HTTPS REST APIs (`/api/v1`) and Server-Sent Events (SSE). No server-side rendering (SSR), no monolithic frontend serving from Spring Boot static resources.
-4. **Data Layer:** PostgreSQL 16 hosted on Neon. Strict separation of pooled endpoint (`:6543`) for application connections and direct endpoint (`:5432`) for schema migrations.
+4. **Data Layer:** PostgreSQL 16 hosted on Neon. Strict separation of pooled endpoint (`-pooler` hostname, port `5432`, PgBouncer Transaction Mode) for application connections and direct endpoint (non-pooler hostname, port `5432`) for schema migrations.
 5. **Strict Prohibitions:**
    - NO Microservices (Modular Monolith only).
    - NO Redis.
@@ -231,8 +231,8 @@ flowchart LR
   - `.env.example` (root)
   - `README.md` (updated)
 - **Relevant Skills & Docs:**
-  - `docs/phase-3/3.1a-environment-and-deployment/01-environments-and-deployment-strategy.md`
-  - `docs/phase-3/3.8-quality-process/02-git-workflow-and-branching.md`
+  - `docs/phase-3/3.1-technology-specification/02-environments-and-hosting.md`
+  - `docs/phase-3/3.8-quality-process/02-git-workflow-and-release.md`
 - **Dependencies:** None (Git and Node already available).
 - **Validation Commands:**
   - `git status --ignored` (verify proper ignore rules)
@@ -264,8 +264,8 @@ flowchart LR
   - `backend/src/test/java/com/velan/production/VelanProductionApplicationTests.java`
 - **Relevant Skills & Docs:**
   - `architecture-patterns` (`C:\Users\Admin\.agents\skills\architecture-patterns\SKILL.md`)
-  - `docs/phase-3/3.1-technology-stack/01-technology-stack.md`
-  - `docs/phase-3/3.2-backend-standard/01-modular-monolith-package-structure.md`
+  - `docs/phase-3/3.1-technology-specification/01-technology-stack-and-versions.md`
+  - `docs/phase-3/3.2-backend-standards/01-module-structure-and-dependency-rules.md`
   - Root `SKILLS.md`
 - **Dependencies:** JDK 21 must be installed on the host machine prior to compiling.
 - **Validation Commands:**
@@ -301,7 +301,7 @@ flowchart LR
 - **Relevant Skills & Docs:**
   - `react-nextjs-development` (`C:\Users\Admin\.agents\skills\react-nextjs-development\SKILL.md`)
   - `code-showcase-react-ui-patterns` (`C:\Users\Admin\.agents\skills\code-showcase-react-ui-patterns\SKILL.md`)
-  - `docs/phase-3/3.1-technology-stack/01-technology-stack.md`
+  - `docs/phase-3/3.1-technology-specification/01-technology-stack-and-versions.md`
   - `docs/phase-3/3.6-frontend-standards/01-project-structure-and-conventions.md`
 - **Dependencies:** Node.js v24.16.0 & npm 11.13.0 (already installed and verified).
 - **Validation Commands:**
@@ -323,7 +323,7 @@ flowchart LR
 - **Objective:** Configure environment variable templates and database configuration profiles for Neon PostgreSQL without creating schema, tables, or running migrations.
 - **Exact Scope:**
   - Add PostgreSQL driver (`org.postgresql:postgresql`) and HikariCP connection configuration to `backend/pom.xml` / `application.yml`.
-  - Configure profile-driven JDBC URLs distinguishing Neon Pooled (`:6543`) for application runtime and Neon Direct (`:5432`) for administrative/migration use.
+  - Configure profile-driven JDBC URLs distinguishing Neon Pooled (`-pooler`, `:5432`) for application runtime and Neon Direct (`:5432`) for administrative/migration use.
   - Configure connection pool properties appropriate for Neon (HikariCP `max-lifetime: 600000`, `keepalive-time: 60000`, small pool size 5-10 for serverless safety).
   - Provide a standalone, non-migrating connection test utility or profile to verify connectivity against a provided test database URL when supplied.
 - **Expected Deliverables:**
@@ -332,13 +332,14 @@ flowchart LR
   - Updated root `.env.example` with `DATABASE_URL` (pooled) and `DATABASE_DIRECT_URL` (direct).
 - **Relevant Skills & Docs:**
   - `database-migrations-sql-migrations` (`C:\Users\Admin\.agents\skills\database-migrations-sql-migrations\SKILL.md`)
-  - `docs/phase-3/3.1-technology-stack/01-technology-stack.md`
-  - `docs/phase-3/3.3-database-and-naming-conventions/02-database-design-and-schema-conventions.md`
+  - `docs/phase-3/3.1-technology-specification/01-technology-stack-and-versions.md`
+  - `docs/phase-3/3.1-technology-specification/02-environments-and-hosting.md` & `03-environment-configuration.md`
+  - `docs/phase-3/3.3-database-and-naming-conventions/02-schema-and-data-type-conventions.md`
 - **Dependencies:** Phase 4.2 completed.
 - **Validation Commands:**
   - `cd backend && ./mvnw test -Dtest=VelanProductionApplicationTests` (with inactive/mock datasource or test profile to ensure context loads without hardcoded database).
 - **Acceptance Criteria:**
-  - Clear architectural separation between pooled (`:6543`) and direct (`:5432`) connection settings.
+  - Clear architectural separation between pooled (`-pooler`, `:5432`) and direct (non-pooler, `:5432`) connection settings.
   - ZERO tables, ZERO schema modifications, ZERO Flyway migrations executed.
 - **Potential Risks:**
   - Attempting to connect to Neon without valid credentials in CI/local. Mitigated by keeping datasource lazy or profile-guarded so build succeeds without active network database.
@@ -361,8 +362,8 @@ flowchart LR
   - `docker-compose.yml` (root)
   - `docker-compose.override.yml.example`
 - **Relevant Skills & Docs:**
-  - `docs/phase-3/3.1a-environment-and-deployment/01-environments-and-deployment-strategy.md`
-  - `docs/phase-3/3.8-quality-process/04-definition-of-done.md`
+  - `docs/phase-3/3.1-technology-specification/02-environments-and-hosting.md` & `04-dependency-and-build-policy.md`
+  - `docs/phase-3/3.8-quality-process/03-code-review-and-definition-of-done.md`
 - **Dependencies:** Phase 4.2 and Phase 4.3 completed; Docker Desktop installed on host.
 - **Validation Commands:**
   - `docker compose config` (validates syntax without daemon if docker CLI available)

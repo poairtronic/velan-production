@@ -44,9 +44,9 @@ To establish the new database, please perform the following steps in your Neon c
 4. Click **"Create Project"**.
 5. Once created, navigate to **Dashboard** $\to$ **Connection Details**:
    * Ensure **"Connection pooling"** toggle is noted.
-   * Neon displays two endpoints:
-     * **Direct Connection** (for future Flyway migrations): `ep-xxx.ap-southeast-1.aws.neon.tech`
-     * **Pooled Connection** (for application runtime traffic): `ep-xxx-pooler.ap-southeast-1.aws.neon.tech`
+   * Neon displays two endpoints (both listening on PostgreSQL port **`5432`** per official Neon documentation):
+     * **Direct Connection** (for future Flyway migrations): `ep-xxx.ap-southeast-1.aws.neon.tech` (port `5432`, direct compute)
+     * **Pooled Connection** (for application runtime traffic): `ep-xxx-pooler.ap-southeast-1.aws.neon.tech` (port `5432`, PgBouncer Transaction Mode)
 6. Copy the connection string. It will look like:
    ```text
    postgresql://[user]:[password]@ep-xxx-pooler.ap-southeast-1.aws.neon.tech/velan_production?sslmode=require

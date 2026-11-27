@@ -16,6 +16,8 @@ RUN npm ci
 # Copy remaining source code and configuration
 COPY . .
 
+USER node
+
 # Expose Vite development server port
 EXPOSE 5173
 

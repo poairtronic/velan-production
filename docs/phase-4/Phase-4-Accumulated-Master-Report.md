@@ -11,10 +11,8 @@
 ## Table of Contents
 
 1. [Executive Summary](#1-executive-summary)
-2. [End-to-End Project Journey (Phases 1 to 4 Overview)](#2-end-to-end-project-journey-phases-1-to-4-overview)
-   - [Phase 1: Requirements Engineering & Business Rules](#phase-1-requirements-engineering--business-rules)
-   - [Phase 2: System Architecture & Domain Modeling](#phase-2-system-architecture--domain-modeling)
-   - [Phase 3: Technical Specifications & Engineering Standards](#phase-3-technical-specifications--engineering-standards)
+2. [Factual Baseline Summary (Phases 1 to 3) & Phase 4 Overview](#2-factual-baseline-summary-phases-1-to-3--phase-4-overview)
+   - [Phases 1 to 3 Authoritative Baseline Summary](#phases-1-to-3-authoritative-baseline-summary)
    - [Phase 4: Create Project Foundation](#phase-4-create-project-foundation)
 3. [Exhaustive Phase 4 Deep-Dive (Sub-phases 4.0 through 4.6)](#3-exhaustive-phase-4-deep-dive-sub-phases-40-through-46)
    - [Phase 4.0: Pre-flight Decisions & Repository Audit](#phase-40-pre-flight-decisions--repository-audit)
@@ -44,10 +42,10 @@ Velan Production is an enterprise-grade, high-reliability **Manufacturing Execut
 
 ```mermaid
 flowchart LR
-    P1["Phase 1<br/>Requirements Analysis<br/>(15 Docs)"] --> P2["Phase 2<br/>System Design<br/>(ADRs 001-008 & ERDs)"]
-    P2 --> P3["Phase 3<br/>Technical Standards<br/>(51 Docs, 5691 Lines)"]
-    P3 --> P4["Phase 4<br/>Create Project<br/>(Sub-phases 4.0 - 4.6)"]
-    P4 -.-> P5["Phase 5<br/>Folder Structure<br/>(Pending Approval)"]
+    P1["Phase 1<br/>Requirements Analysis<br/>(D-01–D-19, 15 Specs, README)"] --> P2["Phase 2<br/>System Design<br/>(ADR-01–ADR-08, 38 Entities, 10 SMs)"]
+    P2 --> P3["Phase 3<br/>Technical Standards<br/>(49 Baseline Docs; 51 w/ 4.7)"]
+    P3 --> P4["Phase 4<br/>Create Project<br/>(Sub-phases 4.0–4.7)"]
+    P4 -.-> P5["Phase 5<br/>Folder Structure<br/>(Pending Owner Decisions)"]
 ```
 
 ### Key Milestones Achieved in Phase 4:
@@ -60,45 +58,17 @@ flowchart LR
 
 ---
 
-## 2. End-to-End Project Journey (Phases 1 to 4 Overview)
+## 2. Factual Baseline Summary (Phases 1 to 3) & Phase 4 Overview
 
-### Phase 1: Requirements Engineering & Business Rules
-* **Core Artifacts:** 15 foundational specifications (`docs/phase-1/`):
-  * `00_DECISION_LOG.md`: Central registry of architectural decisions (D-01 through D-20).
-  * `01_BRD.md` & `02_SRS.md`: Business Requirements Document and Software Requirements Specification covering 9 core production modules.
-  * `06_Role_Matrix.md`: 12 distinct employee roles and access permissions.
-  * `08_Business_Rules.md`: Rigorous manufacturing rules (e.g., BR-001 through BR-045 governing rework limits, scrap approvals, blind QC entry).
-  * `09_Integration_Specification.md`: One-way read-only sync from RM / V-SMART and transactional Outbox delivery to ECR.
-  * `15_Application_Master_Plan.md`: 28-phase master engineering roadmap.
-* **Core Principle Established:** Traceability from physical raw material heat numbers to finished valve assembly serial numbers with unalterable audit trails.
+> **Phase 4.7 Reconciliation Note:** An earlier draft of this section contained multiple factual errors regarding Phases 1–3 (misstating role counts, business rule ranges, roadmap phase counts, decision log range, ADR numbering/titles, Neon ports, entity counts, state machine counts, RM sync design, QC entry semantics, coverage targets, and Git workflow). Those errors have been removed and itemized in [`docs/phase-4/Phase-4.7-Corrections-Report.md`](file:///c:/Users/Admin/OneDrive/Desktop/velan%20production/velan-production/docs/phase-4/Phase-4.7-Corrections-Report.md). The authoritative references for Phases 1–3 are [`docs/PROJECT_CONTEXT_FOR_CLAUDE.md`](file:///c:/Users/Admin/OneDrive/Desktop/velan%20production/velan-production/docs/PROJECT_CONTEXT_FOR_CLAUDE.md) and [`docs/phase-3/README.md`](file:///c:/Users/Admin/OneDrive/Desktop/velan%20production/velan-production/docs/phase-3/README.md).
 
-### Phase 2: System Architecture & Domain Modeling
-* **Core Artifacts:** 6 architectural packages (`docs/phase-2/`):
-  * **2.1 System Architecture:** Architectural Decision Records:
-    * **ADR-001:** Modular Monolith over Microservices.
-    * **ADR-002:** In-process Caffeine Cache; strict prohibition of Redis.
-    * **ADR-003:** PostgreSQL Transactional Outbox; strict prohibition of RabbitMQ/Kafka.
-    * **ADR-004:** PostgreSQL 16 on Neon Serverless (Direct vs. Pooled connection architecture).
-    * **ADR-005:** Cloudflare R2 for CAD drawings, mill test certificates, and inspection photos.
-    * **ADR-006:** Single React SPA frontend.
-    * **ADR-007:** Render Hosting (Web Service for Spring Boot, Static Site for Vite `dist/`).
-    * **ADR-008:** Dual-port Neon connectivity (port 5432 for Flyway migrations, port 6543 for HikariCP pooled runtime).
-  * **2.2 Domain Data Model:** 18 domain entities, complete ER diagrams, and relationship constraints.
-  * **2.3 to 2.6 State Machines:** Formal deterministic state machines governing Piece Lifecycle, Operation Lifecycle, Quality Gate Lifecycle, and Rework/Scrap Routing.
-
-### Phase 3: Technical Specifications & Engineering Standards
-* **Core Artifacts:** 8 engineering standards suites (`docs/phase-3/`, 51 documents, 5,691 lines of code and rules):
-  * **Part 3.1 & 3.1a:** Technology stack versions, Neon dual-port connection topology, Render deployment plans.
-  * **Part 3.2:** Modular monolith package conventions (`com.velan.production`), Clean Architecture layering (Domain $\to$ Application $\to$ Infrastructure $\to$ Presentation), Spring Event-driven cross-module decoupling.
-  * **Part 3.3:** Database & naming conventions (snake_case PostgreSQL, camelCase TypeScript, PascalCase Java), prohibition of native PostgreSQL enums (`VARCHAR(50)` + `CHECK`), table-level immutability triggers for audit logs, Flyway monotonic migration standards (`V001__init.sql`).
-  * **Part 3.4:** REST API conventions (`/api/v1`), standard `ApiResponse<T>` and error envelopes, catalogue of 68 domain error codes, 49 master endpoints, decimal string serialization for measurements (`"150.005"`).
-  * **Part 3.5:** Individual employee authentication (prohibiting shared accounts), Argon2id password hashing, short-lived JWTs (15 min) in memory paired with HttpOnly cookies for refresh tokens with Refresh Token Rotation (RTR).
-  * **Part 3.6:** Frontend architecture, Tailwind CSS design system, High-speed keyboard-navigable Bulk Entry Grid with blind double-entry QC verification.
-  * **Part 3.7:** RM read-only integration via staging tables and ECR Outbox event dispatch.
-  * **Part 3.8:** Quality assurance, automated testing thresholds ($\ge 80\%$ line coverage on domain/application services), Git workflow (trunk-based with feature branches), Definition of Done.
+### Phases 1 to 3 Authoritative Baseline Summary
+* **Phase 1 — Requirements Analysis (`docs/phase-1/`):** Comprises `00_DECISION_LOG.md` (**D-01 through D-19** confirmed; **O-01 through O-12** open), `01_BRD.md` through `15_Application_Master_Plan.md`, and `README.md` (17 files total). Establishes **6 confirmed primary roles** (`Admin`, `PM`, `Designer`, `Operator`, `QC`, `Management` per `D-03`), business rules **BR-001 through BR-070** (`63` active, `7` marked `[REMOVED]` per `D-10`/`O-03`), the **51-Phase Master Roadmap** (`15_Application_Master_Plan.md`), read-only RM (V-SMART) polling and once-only ECR outbox integration (`09_Integration_Specification.md`), independent blind QC on every operation (`D-06`), and 4 PM dispositions (`D-07`).
+* **Phase 2 — System Design (`docs/phase-2/`):** Comprises 6 completed subparts (`2.1`–`2.6`; Parts `2.7` and `2.8` remain pending per `docs/phase-2/README.md`), including **ADR-01 through ADR-08** (`2.1-05`: Modular Monolith, ECR Transactional Outbox, In-Process Caffeine Cache, Read-Only RM Connector, Cloudflare R2 Pre-Signed URLs, Server-Sent Events, Spring Application Events, Unified Neon PostgreSQL with Schema Isolation), **38 domain entities** catalogued in `2.2-02`, and **10 state machines** across Parts `2.3`–`2.6`.
+* **Phase 3 — Technical Standards (`docs/phase-3/`):** Comprises 8 parts (`3.1`–`3.8`; 49 baseline files at commit `daf3941`, expanded to 51 files in Phase 4.7 with Part 3.2 Docs `07` and `08`). Defines the Java 21 / Spring Boot / React 19 / Vite 6 / PostgreSQL 16 (Neon: direct and `-pooler` endpoints both on port `5432`, PgBouncer transaction mode) stack, modular monolith `api/` vs `internal/` packaging (`3.2`), database/Flyway standards (`3.3`), `/api/v1` + `ApiErrorResponse` + 68 starter error codes + 49 endpoints (`3.4`), Argon2id + 15-min JWT + HttpOnly refresh cookie with rotation (`3.5`), frontend bulk grid with independent blind QC (`3.6`), ACL-based RM polling + ECR outbox without RM staging tables (`3.7`), and testing/Git standards ($\ge 90\%$ domain/state-machine line coverage, $\ge 75\%$ overall, protected `main` with PRs and Squash & Merge in `3.8`). See [`docs/phase-3/README.md`](file:///c:/Users/Admin/OneDrive/Desktop/velan%20production/velan-production/docs/phase-3/README.md) and [`docs/PROJECT_CONTEXT_FOR_CLAUDE.md`](file:///c:/Users/Admin/OneDrive/Desktop/velan%20production/velan-production/docs/PROJECT_CONTEXT_FOR_CLAUDE.md).
 
 ### Phase 4: Create Project Foundation
-* **Focus:** Establishing the physical monorepo, starter applications, containerization templates, and pre-flight validation without introducing premature business logic.
+* **Focus:** Establishing the physical monorepo, starter applications, containerization templates, and pre-flight validation without introducing premature business logic. (Follow-up audit, reconciliation, and Phase 3.2 completion performed in **Phase 4.7**.)
 
 ---
 
@@ -197,8 +167,8 @@ flowchart TD
 * **Goal:** Establish containerization and multi-container coordination for local development.
 * **Deliverables Created:**
   1. `backend/Dockerfile`: Multi-stage Dockerfile:
-     * *Stage 1 (Builder):* `eclipse-temurin:21-jdk-jammy`, mounts `.mvn` and `pom.xml`, runs `mvn dependency:go-offline`, and packages the JAR without running tests.
-     * *Stage 2 (Runtime):* `eclipse-temurin:21-jre-jammy`, creates unprivileged system user `velan` (`UID 10001`), configures JVM flags (`-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0`), exposes port `8080`, and executes the repackaged Spring Boot JAR.
+     * *Stage 1 (Builder):* `eclipse-temurin:21-jdk-jammy`, copies `.mvn/` and `mvnw`/`pom.xml`, runs `./mvnw dependency:go-offline -B || true`, and packages the JAR without running tests.
+     * *Stage 2 (Runtime):* `eclipse-temurin:21-jre-jammy`, creates unprivileged system user `velan` (OS-assigned system UID), configures JVM flags (`-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0`), exposes port `8080`, and executes the repackaged Spring Boot JAR. *(See Phase 4.7 Dockerfile audit in `Phase-4.7-Corrections-Report.md`.)*
   2. `backend/.dockerignore`: Excludes `.git`, `target/`, IDE files, `.env*`, and temporary files.
   3. `frontend/Dockerfile`: Node.js dev container:
      * Base image: `node:22-alpine`.
@@ -218,7 +188,7 @@ flowchart TD
 * **Deliverables & Verification Executed:**
   * Clean verification of backend: `BUILD SUCCESS` (16.79s, 2 tests run, 0 failures).
   * Clean verification of frontend: `tsc -b --pretty` passed with 0 errors; `vite build` passed in 1.60s.
-  * Git working tree inspected: Zero untracked build artifacts, all source files intact, branch synchronized with `main` at commit `daf3941`.
+  * Git working tree inspected at Phase 4.6 closure (`daf3941`); subsequently committed directly to `main` in `44cc12e` (flagged as departing from `3.8-02` Git workflow in Phase 4.7).
   * Comprehensive 27-item acceptance matrix evaluated (24 items PASS, 1 item DEFERRED per owner mandate, 2 items BLOCKED on host Docker Desktop).
   * Formal Phase 4 closure report authored: [`docs/phase-4/Phase-4.6-Completion-Report.md`](file:///c:/Users/Admin/OneDrive/Desktop/velan%20production/velan-production/docs/phase-4/Phase-4.6-Completion-Report.md) (25,450 bytes).
   * Final Recommendation: **PASS WITH WARNINGS**.
@@ -350,7 +320,7 @@ velan-production/
   ?? docs/phase-4/
   ?? frontend/
   ```
-* **Git Safety Audit:** Zero commits and zero pushes have been made. All Phase 4 assets are intact and safely staged in the working tree. Build directories (`backend/target/`, `frontend/dist/`, `frontend/node_modules/`, `*.tsbuildinfo`) are completely ignored.
+* **Git History Note (Updated in Phase 4.7):** At Phase 4.6 closure, changes remained uncommitted on `main` (`daf3941`); they were subsequently committed directly to `main` and pushed in `44cc12e` (see Phase 4.7 Git workflow audit in `Phase-4.7-Corrections-Report.md`). Build directories (`backend/target/`, `frontend/dist/`, `frontend/node_modules/`, `*.tsbuildinfo`) remain properly ignored by `.gitignore`.
 
 ---
 
@@ -361,10 +331,10 @@ Throughout all Phase 4 activities, the following strict architectural invariants
 | Invariant / Boundary | Approved Requirement | Implementation Verification | Status |
 |---|---|---|---|
 | **Monorepo Structure** | Decision O-FE-01: Single monorepo, independent apps | `backend/` and `frontend/` directories at root | **COMPLIANT** |
-| **No Microservices** | ADR-001: Modular Monolith | Single Spring Boot artifact (`velan-production-backend-0.0.1-SNAPSHOT.jar`) | **COMPLIANT** |
-| **No Redis / External Cache** | ADR-002: In-Process Caffeine Cache | Zero Redis dependencies in `pom.xml` or `docker-compose.yml` | **COMPLIANT** |
-| **No RabbitMQ / Kafka** | ADR-003: Database Transactional Outbox | Zero message broker dependencies or containers | **COMPLIANT** |
-| **No Next.js** | ADR-006: React 19 Single Page Application | Pure Vite 6 + React 19 SPA starter | **COMPLIANT** |
+| **No Microservices** | `ADR-01`: Modular Monolith | Single Spring Boot artifact (`velan-production-backend-0.0.1-SNAPSHOT.jar`) | **COMPLIANT** |
+| **No Redis / External Cache** | `ADR-03` & `D-13`: In-Process Caffeine Cache | Zero Redis dependencies in `pom.xml` or `docker-compose.yml` | **COMPLIANT** |
+| **No RabbitMQ / Kafka** | `ADR-02` & `D-13`: Database Transactional Outbox | Zero message broker dependencies or containers | **COMPLIANT** |
+| **No Next.js** | `13_Tech_Stack.md`, `2.1-03`, `3.6-01`: React 19 Single Page Application | Pure Vite 6 + React 19 SPA starter | **COMPLIANT** |
 | **No Direct DB Writes to RM** | Integration Spec: Read-only RM integration | Zero connections or write adapters to RM database | **COMPLIANT** |
 | **Strict TypeScript** | `tsconfig.app.json` strict mode | `noUncheckedIndexedAccess: true`, `exactOptionalPropertyTypes: true` | **COMPLIANT** |
 | **Zero Premature Business Code** | Strict phase boundaries | Zero JPA entities, zero business tables, zero Flyway migrations | **COMPLIANT** |
@@ -381,7 +351,7 @@ Throughout all Phase 4 activities, the following strict architectural invariants
 * **Current State:** `backend/Dockerfile`, `frontend/Dockerfile`, `.dockerignore`, and `docker-compose.yml` are created and statically validated. Runtime execution is blocked because Docker Desktop is not installed on the Windows host machine. Local development can proceed immediately via standalone native execution (`.\mvnw.cmd spring-boot:run` and `npm run dev`).
 
 ### 3. Open Architectural Conflicts (Preserved for Future Resolution)
-* The 3 open conflicts (`C-1`, `C-2`, `C-3`) and 12 open architectural questions (`O-01` through `O-12`) catalogued in Phase 2 remain explicitly open and tracked in `docs/phase-1/00_DECISION_LOG.md`. None were prematurely closed during Phase 4.
+* Open items `O-01` through `O-12` remain open in `docs/phase-1/00_DECISION_LOG.md`; open conflicts `C-1`, `C-2`, `C-3` and subsequent technical open items (`O-13`–`O-15`, `O-MOD-02`, etc.) remain open in `SKILLS.md §0`, `docs/phase-3/README.md`, and Part 3.2/3.8 reports. None were prematurely closed during Phase 4.
 
 ---
 
@@ -421,28 +391,15 @@ Throughout all Phase 4 activities, the following strict architectural invariants
 
 ## 9. Phase 5 Transition Roadmap
 
-Once the project owner accepts this Phase 4 completion report, the project is positioned to transition to **Phase 5: Folder Structure**:
+> **Phase 4.7 Update:** Phase 4 foundation files were committed on `main` in `44cc12e`. Before starting **Phase 5: Folder Structure**, the project owner must review the module reconciliation in [`docs/phase-4/Phase-4.7-Module-Reconciliation.md`](file:///c:/Users/Admin/OneDrive/Desktop/velan%20production/velan-production/docs/phase-4/Phase-4.7-Module-Reconciliation.md) and the open items in [`docs/phase-4/Phase-4.7-Corrections-Report.md`](file:///c:/Users/Admin/OneDrive/Desktop/velan%20production/velan-production/docs/phase-4/Phase-4.7-Corrections-Report.md). The previously proposed `com.velan.production.modules.* + shared + infrastructure` split conflicts with Part 3.2 (`com.velan.production.<module>`) and remains **unapproved** pending owner resolution (including **C-1**).
 
 ```mermaid
 flowchart TD
-    P4Done["Phase 4 Complete<br/>(Monorepo & Starters Verified)"] --> OwnerApproval{"Owner Approval"}
-    OwnerApproval -->|"Commit Staged Changes"| GitCommit["Git Commit:<br/>feat(phase-4): establish repository foundation"]
-    GitCommit --> P5Start["Phase 5: Folder Structure"]
-
-    subgraph P5Details["Phase 5 Scope"]
-        BEPkg["Backend Package Layout:<br/>com.velan.production.modules.*<br/>(orders, planning, execution, quality, documents, admin, integration)<br/>+ shared + infrastructure"]
-        FEMod["Frontend Module Layout:<br/>src/modules/* (orders, planning, execution, quality, admin)<br/>+ src/shared + src/api"]
-    end
-
-    P5Start --> BEPkg
-    P5Start --> FEMod
+    P4Done["Phase 4 Committed (44cc12e)<br/>& Phase 4.7 Corrections"] --> OwnerApproval{"Owner Resolves<br/>Module Layout & C-1 / O-MOD-02"}
+    OwnerApproval -->|"Approved Module List"| P5Start["Phase 5: Folder Structure"]
 ```
 
 ### Next Steps for Project Owner:
-1. **Review and Approve Phase 4 Closure:** Formally approve the **PASS WITH WARNINGS** audit status.
-2. **Authorize Git Commit:** Instruct the agent to stage and commit all Phase 4 files with a clean, conventional commit message:
-   ```bash
-   git add .
-   git commit -m "feat(phase-4): establish repository foundation, backend starter, frontend starter, and local docker config"
-   ```
-3. **Authorize Phase 5:** Initiate Phase 5 to establish the full backend package hierarchy and frontend feature module structure.
+1. **Review Phase 4.7 Corrections & Audits:** Inspect [`Phase-4.7-Corrections-Report.md`](file:///c:/Users/Admin/OneDrive/Desktop/velan%20production/velan-production/docs/phase-4/Phase-4.7-Corrections-Report.md) (Neon `:5432`, Dockerfile static findings, Git workflow rule, `.env.example` / `README.md` cleanup outside `docs/`).
+2. **Resolve Open Module & Layering Questions:** Answer the questions in [`Phase-4.7-Module-Reconciliation.md`](file:///c:/Users/Admin/OneDrive/Desktop/velan%20production/velan-production/docs/phase-4/Phase-4.7-Module-Reconciliation.md) (including **C-1**) and `O-MOD-02` (JPA annotations on domain entities) in `3.2 / 08-coding-conventions-and-layering.md`.
+3. **Merge via PR & Authorize Phase 5:** Follow [`3.8 / 02-git-workflow-and-release.md`](file:///c:/Users/Admin/OneDrive/Desktop/velan%20production/velan-production/docs/phase-3/3.8-quality-process/02-git-workflow-and-release.md) (PR + Squash Merge to `main`), then authorize Phase 5.
