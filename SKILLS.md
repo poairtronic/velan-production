@@ -316,3 +316,14 @@ git status: <only the intended files changed? yes/no>
 
 ## Appendix B — Change control for this file
 Only the owner changes this file. When a conflict in section 0 is decided or a new rule is agreed, update section 0 or section 1, and record the decision in the decision log in the same change.
+
+
+---
+
+## Appendix C — Final Folder Structure & Module-Boundary Rules (Phase 5.1)
+
+- **Backend (`com.velan.production`):**
+  - **9 Domain Modules:** `iam`, `order`, `engineering`, `execution`, `quality`, `qcexception`, `vendor`, `notification`, `integration` (`<module>/api` and `<module>/internal/{domain,application,infrastructure}`).
+  - **Shared Kernel:** `shared/{audit,error,id,idempotency,scheduling,security,time}` (no `api`/`internal` split; no dependency on domain modules).
+  - **Boundary Rules (enforced by ArchUnit):** No module may import another module's `internal.*` packages; modules communicate only through `<other>.api` and `shared`. `domain` must not depend on `application` or `infrastructure`; `application` and `api` must not depend on `infrastructure`.
+- **Frontend (`frontend/src/`):** `app/`, `features/<module>/`, `components/ui/`, `hooks/`, `lib/{api,utils}/`, `routes/`, `types/`, `styles/` using `@/*`.
