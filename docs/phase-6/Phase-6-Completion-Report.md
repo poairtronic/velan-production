@@ -10,7 +10,7 @@
 
 | Part | Title | Outcome |
 |---|---|---|
-| **6.1** | Environment Strategy | Created `docs/phase-6/6.1-environment-strategy.md` with 4 environments (`local`, `dev`, `prod`, `ci`), 14-variable catalogue, secrets policy, startup validation rules, and 3 documented conflicts. |
+| **6.1** | Environment Strategy | Created `docs/phase-6/6.1-environment-strategy.md` with environments (`local`, `prod`, `ci`), 14-variable catalogue, secrets policy, startup validation rules, and 3 documented conflicts. |
 | **6.2** | Backend Configuration | Added `spring-boot-starter-validation`, `AppProperties`, `JwtProperties`, `CorsConfig`, `application.yml`, `application-local.yml`, `application-prod.yml`, UTC `TimeZone.setDefault`, updated `.env.example`, and added `ConfigurationPropertiesTests` (3 tests). |
 | **6.3** | Frontend Configuration | Added `frontend/.env.example`, `frontend/src/vite-env.d.ts`, `frontend/src/lib/env.ts` (frozen `env` with `apiBaseUrl` & `displayTimezone: 'Asia/Kolkata'`), production build guard in `frontend/vite.config.ts`, startup import in `App.tsx`, and `README.md` docs. |
 | **6.4** | Docker, Compose & CI Wiring | Updated `docker-compose.yml` (`${VAR}` substitution, `SPRING_PROFILES_ACTIVE=local`, zero DB containers), `frontend/Dockerfile` (`ARG VITE_API_BASE_URL`), `backend/Dockerfile` (`TZ=UTC`), `.github/workflows/ci.yml` (plain `env:` dummy `JWT_SECRET` & `VITE_API_BASE_URL`), and `README.md`. Validated YAML with `npx --yes js-yaml`. |
@@ -25,7 +25,7 @@
 | Every variable in 6.1 catalogue appears in `.env.example` or `frontend/.env.example` | **PASS** | All 14 catalogue entries (including commented `later phase` R2, SMTP, RM/ECR placeholders) are present in `.env.example` and `frontend/.env.example`. |
 | No secret value or real URL in any tracked file | **PASS** | `git grep -n -E "password=\|secret=\|postgresql://\|neon\.tech" -- ":!docs/"` returned only placeholder templates in `.env.example` (`USER:PASSWORD`, `ep-xxx*.neon.tech`) and `NeonConnectivityTests.java` (`USER:PASSWORD` check). |
 | `prod` profile fails without `JWT_SECRET` | **PASS** | `ConfigurationPropertiesTests.prodProfileFailsWithoutJwtSecret` passed (`JWT_SECRET is required in prod profile and must not be blank`). |
-| `prod` profile fails without `CORS_ALLOWED_ORIGINS` | **PARTIAL / NOT TESTED** | `application-prod.yml` binds `CORS_ALLOWED_ORIGINS:` (empty), but `AppProperties.CorsProperties` only has `@NotNull` (no `@NotEmpty`) and no dedicated test asserts `prod` failure on empty `CORS_ALLOWED_ORIGINS`. |
+| `prod` profile fails without `CORS_ALLOWED_ORIGINS` | **PASS** | `ConfigurationPropertiesTests.prodProfileFailsWithoutCorsAllowedOrigins` & `prodProfileFailsWithWildcardCorsOrigin` passed (`localProfileStartsWithoutCorsAllowedOrigins` also passed). |
 | Only `local` and `prod` profiles exist | **PASS** | Only `application.yml`, `application-local.yml`, and `application-prod.yml` exist in `backend/src/main/resources/`. |
 | No business code, entities, endpoints, or migrations added | **PASS** | Only `shared/time/AppProperties.java`, `shared/security/JwtProperties.java`, `shared/security/CorsConfig.java`, and config/test files were added. |
 

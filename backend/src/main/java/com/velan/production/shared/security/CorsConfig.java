@@ -1,6 +1,6 @@
 package com.velan.production.shared.security;
 
-import com.velan.production.shared.time.AppProperties;
+import com.velan.production.shared.config.AppProperties;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
