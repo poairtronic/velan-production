@@ -107,3 +107,6 @@ playwright/.cache/
 # ------------------------------------------------------------------------------
 docker-compose.override.yml
 .docker/
+
+# Local file storage (Phase 8.8)
+.data/

@@ -17,6 +17,10 @@ spring:
     validate-on-migrate: true
     clean-disabled: true
     baseline-on-migrate: false
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 55MB
   lifecycle:
     timeout-per-shutdown-phase: 30s
 

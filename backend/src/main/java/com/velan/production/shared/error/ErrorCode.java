@@ -9,5 +9,6 @@ public enum ErrorCode {
     ERR_BUSINESS_RULE,
     ERR_IDEMPOTENCY,
     ERR_UNSUPPORTED,
+    ERR_UNAVAILABLE,
     ERR_INTERNAL
 }

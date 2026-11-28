@@ -19,6 +19,7 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @RestControllerAdvice
@@ -97,6 +98,11 @@ public class GlobalExceptionHandler {
             }
         }
         return build(HttpStatus.CONFLICT, ErrorCode.ERR_CONFLICT, "Data integrity violation", List.of());
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ErrorResponse> handleMaxUploadSize(MaxUploadSizeExceededException ex) {
+        return build(HttpStatus.BAD_REQUEST, ErrorCode.ERR_VALIDATION, "Uploaded file exceeds maximum allowed size", List.of());
     }
 
     @ExceptionHandler(AccessDeniedException.class)
