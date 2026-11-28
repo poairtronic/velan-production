@@ -27,6 +27,12 @@ services:
         sync: false
       - key: BCRYPT_STRENGTH
         sync: false
+      - key: AUTH_LOCKOUT_MAX_ATTEMPTS
+        sync: false
+      - key: AUTH_LOCKOUT_DURATION
+        sync: false
+      - key: AUTH_LOGIN_RATE_LIMIT_PER_MINUTE
+        sync: false
       - key: BOOTSTRAP_ADMIN_LOGIN
         sync: false
       - key: BOOTSTRAP_ADMIN_PASSWORD
@@ -83,6 +89,12 @@ services:
       - key: JWT_REFRESH_TTL
         sync: false
       - key: BCRYPT_STRENGTH
+        sync: false
+      - key: AUTH_LOCKOUT_MAX_ATTEMPTS
+        sync: false
+      - key: AUTH_LOCKOUT_DURATION
+        sync: false
+      - key: AUTH_LOGIN_RATE_LIMIT_PER_MINUTE
         sync: false
       - key: BOOTSTRAP_ADMIN_LOGIN
         sync: false

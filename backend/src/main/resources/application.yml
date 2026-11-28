@@ -54,6 +54,11 @@ app:
       refresh-ttl: ${JWT_REFRESH_TTL:PT12H}
     password:
       bcrypt-strength: ${BCRYPT_STRENGTH:12}
+    lockout:
+      max-attempts: ${AUTH_LOCKOUT_MAX_ATTEMPTS:5}
+      duration: ${AUTH_LOCKOUT_DURATION:PT15M}
+    login-rate-limit:
+      per-minute: ${AUTH_LOGIN_RATE_LIMIT_PER_MINUTE:30}
   bootstrap:
     admin:
       login: ${BOOTSTRAP_ADMIN_LOGIN:}

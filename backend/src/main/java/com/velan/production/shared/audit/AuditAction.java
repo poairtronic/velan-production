@@ -15,5 +15,7 @@ public enum AuditAction {
     LOCKOUT,
     PASSWORD_CHANGE,
     TOKEN_REFRESH,
+    LOGOUT,
+    TOKEN_REUSE_DETECTED,
     ACCESS_DENIED
 }

@@ -64,7 +64,7 @@ class SecurityFilterChainTests {
                 .andExpect(jsonPath("$.code").value("ERR_UNAUTHORIZED"));
 
         mockMvc.perform(get("/test-sec/protected")
-                        .header("Authorization", "Bearer invalid.jwt.token"))
+                .header("Authorization", "Bearer invalid.jwt.token"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("ERR_UNAUTHORIZED"));
     }
@@ -76,13 +76,14 @@ class SecurityFilterChainTests {
         String token = jwtService.issueAccessToken(userId, "EMP002", List.of("PM"));
 
         mockMvc.perform(get("/test-sec/protected")
-                        .header("Authorization", "Bearer " + token))
+                .header("Authorization", "Bearer " + token))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("ERR_UNAUTHORIZED"));
     }
 
     @Test
-    void permissionCheckReturns403WhenDeniedAnd200WhenGrantedAndTokenNeverLogged(CapturedOutput output) throws Exception {
+    void permissionCheckReturns403WhenDeniedAnd200WhenGrantedAndTokenNeverLogged(CapturedOutput output)
+            throws Exception {
         UUID userId = UUID.randomUUID();
         when(permissionRepository.isUserActive(userId)).thenReturn(true);
         when(permissionRepository.findUserOverrides(userId)).thenReturn(Map.of());
@@ -90,13 +91,13 @@ class SecurityFilterChainTests {
         String token = jwtService.issueAccessToken(userId, "EMP003", List.of("OPERATOR"));
 
         mockMvc.perform(get("/test-sec/protected")
-                        .header("Authorization", "Bearer " + token))
+                .header("Authorization", "Bearer " + token))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").value("ERR_FORBIDDEN"));
 
         when(permissionRepository.findRolePermissions(userId)).thenReturn(Set.of("SC_VIEW"));
         mockMvc.perform(get("/test-sec/protected")
-                        .header("Authorization", "Bearer " + token))
+                .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk());
 
         assertFalse(output.getOut().contains(token), "JWT token must never appear in logs");
@@ -110,13 +111,13 @@ class SecurityFilterChainTests {
         String token = jwtService.issueAccessToken(userId, "EMP004", List.of("OPERATOR"));
 
         mockMvc.perform(get("/test-sec/must-change")
-                        .header("Authorization", "Bearer " + token))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$").value(true));
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("ERR_PASSWORD_CHANGE_REQUIRED"));
 
         when(permissionRepository.mustChangePassword(userId)).thenReturn(false);
         mockMvc.perform(get("/test-sec/must-change")
-                        .header("Authorization", "Bearer " + token))
+                .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").value(false));
     }
@@ -125,7 +126,11 @@ class SecurityFilterChainTests {
     void publicPathsRemainAccessibleWithoutToken() throws Exception {
         mockMvc.perform(get("/actuator/health/liveness")).andExpect(status().isOk());
         mockMvc.perform(get("/actuator/health/readiness")).andExpect(status().isOk());
-        mockMvc.perform(post("/api/v1/auth/login")).andExpect(status().isOk());
+        mockMvc.perform(post("/api/v1/auth/login")
+                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                .content("{}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("ERR_VALIDATION"));
         mockMvc.perform(post("/api/v1/auth/refresh")).andExpect(status().isOk());
         mockMvc.perform(get("/v3/api-docs")).andExpect(status().isUnauthorized());
     }
@@ -142,11 +147,6 @@ class SecurityFilterChainTests {
         @GetMapping("/test-sec/must-change")
         public boolean mustChangeEndpoint(org.springframework.security.core.Authentication auth) {
             return ((AuthenticatedUser) auth.getPrincipal()).mustChangePassword();
-        }
-
-        @PostMapping("/api/v1/auth/login")
-        public String loginStub() {
-            return "login";
         }
 
         @PostMapping("/api/v1/auth/refresh")

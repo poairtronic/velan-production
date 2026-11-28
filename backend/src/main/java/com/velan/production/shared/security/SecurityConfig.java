@@ -9,10 +9,12 @@ import com.velan.production.shared.error.ErrorCode;
 import com.velan.production.shared.error.ErrorResponse;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import org.slf4j.MDC;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
@@ -32,9 +34,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtException;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -73,15 +77,23 @@ public class SecurityConfig {
             PermissionRepository permissionRepository,
             ObjectMapper objectMapper,
             AppProperties appProperties,
+            SecurityProperties securityProperties,
+            ObjectProvider<Clock> utcClockProvider,
             Environment environment,
             AuditService auditService) throws Exception {
 
         boolean isLocal = environment.acceptsProfiles(Profiles.of("local"));
+        LoginRateLimitFilter loginRateLimitFilter =
+                new LoginRateLimitFilter(securityProperties, objectMapper, utcClockProvider);
+        PasswordChangeGateFilter passwordChangeGateFilter =
+                new PasswordChangeGateFilter(objectMapper, utcClockProvider);
 
         http
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource(appProperties)))
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterBefore(loginRateLimitFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(passwordChangeGateFilter, BearerTokenAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> {
                     auth.requestMatchers(PUBLIC_PATHS).permitAll();
                     if (isLocal) {

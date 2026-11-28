@@ -36,6 +36,9 @@ app:
     jwt:
       secret: ${JWT_SECRET:}
 
+server:
+  forward-headers-strategy: native
+
 logging:
   structured:
     format:
