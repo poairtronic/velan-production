@@ -1,6 +1,6 @@
 # ==============================================================================
 # Velan Production — Backend Dockerfile (Local Development & Containerization)
-# Language: Java 21 LTS | Framework: Spring Boot 3.4.x | Build: Maven 3.9.9
+# Language: Java 21 LTS | Framework: Spring Boot 4.0.x | Build: Maven 3.9.9
 # ==============================================================================
 
 # Stage 1: Build stage with OpenJDK 21 compiler

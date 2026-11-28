@@ -80,6 +80,27 @@ class ConfigurationPropertiesTests {
     }
 
     @Test
+    void testProfileStartsWithNoDatabaseVariables() {
+        try (ConfigurableApplicationContext ctx = new SpringApplicationBuilder(VelanProductionApplication.class)
+                .profiles("test")
+                .properties("server.port=0")
+                .run()) {
+            assertNotNull(ctx.getBean(AppProperties.class));
+        }
+    }
+
+    @Test
+    void stagingProfileFailsWithoutRequiredProperties() {
+        assertThrows(Exception.class, () -> {
+            try (ConfigurableApplicationContext ctx = new SpringApplicationBuilder(VelanProductionApplication.class)
+                    .properties("server.port=0")
+                    .run("--spring.profiles.active=staging")) {
+                assertNotNull(ctx);
+            }
+        });
+    }
+
+    @Test
     void prodProfileFailsWithoutDatabaseUrl() {
         String validSecret = Base64.getEncoder().encodeToString("01234567890123456789012345678901".getBytes());
         assertThrows(Exception.class, () -> {
