@@ -36,6 +36,8 @@ management:
 
 app:
   timezone: ${TZ:UTC}
+  idempotency:
+    ttl: ${IDEMPOTENCY_TTL:24h}
 
 logging:
   pattern:
