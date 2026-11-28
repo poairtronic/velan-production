@@ -38,6 +38,12 @@ app:
   timezone: ${TZ:UTC}
   idempotency:
     ttl: ${IDEMPOTENCY_TTL:24h}
+  security:
+    jwt:
+      access-ttl: ${JWT_ACCESS_TTL:PT1H}
+      refresh-ttl: ${JWT_REFRESH_TTL:PT12H}
+    password:
+      bcrypt-strength: ${BCRYPT_STRENGTH:12}
 
 springdoc:
   api-docs:

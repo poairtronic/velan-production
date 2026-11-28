@@ -31,6 +31,8 @@ app:
     jwt-secret: ${JWT_SECRET:}
     jwt-expiration-minutes: ${JWT_EXPIRATION_MINUTES:60}
     require-jwt-secret: true
+    jwt:
+      secret: ${JWT_SECRET:}
 
 logging:
   structured:

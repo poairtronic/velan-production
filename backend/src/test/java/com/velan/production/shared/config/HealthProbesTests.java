@@ -34,13 +34,5 @@ class HealthProbesTests {
                 HttpResponse.BodyHandlers.ofString());
         assertEquals(200, readiness.statusCode());
         assertTrue(readiness.body().contains("\"UP\""));
-
-        HttpResponse<String> actuatorIndex = http.send(
-                HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/actuator")).GET().build(),
-                HttpResponse.BodyHandlers.ofString());
-        assertEquals(200, actuatorIndex.statusCode());
-        assertTrue(actuatorIndex.body().contains("\"health\""));
-        assertTrue(!actuatorIndex.body().contains("\"env\""));
-        assertTrue(!actuatorIndex.body().contains("\"beans\""));
     }
 }

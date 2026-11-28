@@ -1,5 +1,6 @@
 package com.velan.production.shared.persistence;
 
+import com.velan.production.shared.security.AuthenticatedUser;
 import jakarta.persistence.EntityManagerFactory;
 import java.time.Clock;
 import java.time.Instant;
@@ -12,9 +13,13 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.data.auditing.DateTimeProvider;
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 /**
- * Auto-configuration enabling JPA auditing with UTC timestamps and current-user resolution
+ * Auto-configuration enabling JPA auditing with UTC timestamps and current-user
+ * 
+ * resolution
  * whenever HibernateJpaAutoConfiguration has created an EntityManagerFactory.
  * Security principal wiring will be supplied in Part 8.5.
  */
@@ -35,6 +40,12 @@ public class JpaAuditingConfig {
 
     @Bean
     public AuditorAware<UUID> auditorAware() {
-        return Optional::empty;
+        return () -> {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.getPrincipal() instanceof AuthenticatedUser user) {
+                return Optional.ofNullable(user.userId());
+            }
+            return Optional.empty();
+        };
     }
 }

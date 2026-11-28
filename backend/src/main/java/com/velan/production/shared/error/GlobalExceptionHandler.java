@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -96,6 +97,11 @@ public class GlobalExceptionHandler {
             }
         }
         return build(HttpStatus.CONFLICT, ErrorCode.ERR_CONFLICT, "Data integrity violation", List.of());
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException ex) {
+        return build(HttpStatus.FORBIDDEN, ErrorCode.ERR_FORBIDDEN, "Access denied", List.of());
     }
 
     @ExceptionHandler(Exception.class)

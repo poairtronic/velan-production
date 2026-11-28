@@ -34,7 +34,7 @@ class AuditingTests {
 
         String schema = "velan_audit_test_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12);
         try (Connection conn = DriverManager.getConnection(url, user, pass);
-             Statement stmt = conn.createStatement()) {
+                   Statement stmt = conn.createStatement()) {
             stmt.execute("CREATE SCHEMA " + schema);
             stmt.execute("""
                     CREATE TABLE %s.test_audited_items (
@@ -74,7 +74,9 @@ class AuditingTests {
                 TestAuditedItem updated = repo.saveAndFlush(saved);
 
                 assertEquals(createdAt, updated.getCreatedAt(), "createdAt must remain unchanged on update");
-                assertTrue(!updated.getUpdatedAt().isBefore(firstUpdatedAt), "updatedAt must not move backward on update");
+                assertTrue(!updated.getUpdatedAt().isBefore(firstUpdatedAt),
+                        
+                        "updatedAt must not move backward on update");
             } finally {
                 stmt.execute("DROP SCHEMA IF EXISTS " + schema + " CASCADE");
             }
@@ -95,16 +97,34 @@ class AuditingTests {
         private UUID id;
         private String name;
 
-        protected TestAuditedItem() {}
+        
+        protected TestAuditedItem() {
+        }
 
         TestAuditedItem(UUID id, String name) {
             this.id = id;
             this.name = name;
         }
+            
+        
 
-        public UUID getId() { return id; }
-        public String getName() { return name; }
-        public void setName(String name) { this.name = name; }
+        
+            
+        
+
+        public UUID getId() {
+            
+        
+            return id;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
     }
 
     interface TestAuditedItemRepository extends JpaRepository<TestAuditedItem, UUID> {
