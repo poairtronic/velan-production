@@ -131,7 +131,7 @@ Every state machine from Phase 2 maps to an aggregate, domain service, and trans
 | 4 | **PM Exception Disposition** | `exception` | `QCException` | Part 2.5 (`03-exception-lifecycle-and-pm...`) | `ExceptionDispositionException`<br/>`INVALID_DISPOSITION_TRANSITION` |
 | 5 | **ECR Outbox Event** | `integration` | `OutboxEvent` | Part 2.5 (`04-ecr-outbox-integration...`) | `OutboxTransitionException`<br/>`INVALID_OUTBOX_STATE_TRANSITION` |
 | 6 | **Scrap Replacement Lineage** | `execution` | `PieceReplacementLineage`| Part 2.5 (`03-exception-lifecycle-and-pm...`) | `ReplacementLineageException`<br/>`REPLACEMENT_BLOCKED_UNRELEASED` |
-| 7 | **Sales Contract Header** | `order` | `Subcontract` | Part 2.6 (`01-sc-lifecycle-overview...`) | `ContractTransitionException`<br/>`INVALID_CONTRACT_STATUS_TRANSITION` |
+| 7 | **Size Card Header** | `order` | `Subcontract` | Part 2.6 (`01-sc-lifecycle-overview...`) | `ContractTransitionException`<br/>`INVALID_CONTRACT_STATUS_TRANSITION` |
 | 8 | **SC Product Line Item** | `order` | `SubcontractProduct` | Part 2.6 (`01-sc-lifecycle-overview...`) | `ContractLineTransitionException`<br/>`INVALID_LINE_STATUS_TRANSITION` |
 | 9 | **Assembled Set Lifecycle** | `completion` | `AssembledSet` | Part 2.6 (`02-sc-set-and-component...`) | `SetTransitionException`<br/>`INVALID_SET_STATUS_TRANSITION` |
 | 10| **Packing & Dispatch Gate** | `completion` | `AssembledSet` | Part 2.6 (`03-packing-and-dispatch...`) | `DispatchGateException`<br/>`SET_NOT_READY_FOR_DISPATCH` |

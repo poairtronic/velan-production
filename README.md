@@ -166,3 +166,9 @@ From the repository root:
 ### Docker Compose & CI Environment Wiring (Phase 6.4)
 - **Local with Compose:** Copy `.env.example` to `.env`, set `JWT_SECRET` (Base64, >= 256 bits) and optional `DATABASE_URL`, then run `docker compose up --build`.
 - **CI Values:** `.github/workflows/ci.yml` runs the backend with `SPRING_PROFILES_ACTIVE=local` and a CI-only dummy `JWT_SECRET` (no `DATABASE_URL`, so `NeonConnectivityTests` skips), and sets `VITE_API_BASE_URL=http://localhost:8080/api/v1` for the frontend build.
+
+### Flyway Migrations & MigrationTests (Phase 7.2)
+- **Run `MigrationTests` locally against Neon dev branch:**
+  Set `DATABASE_DIRECT_URL` (direct `:5432` URL, not `-pooler`), `DB_USER`, and `DB_PASSWORD`, then run:
+  `cd backend; .\mvnw.cmd -B clean verify`
+- When `DATABASE_DIRECT_URL` is unset, `MigrationTests` and `NeonConnectivityTests` are skipped automatically.

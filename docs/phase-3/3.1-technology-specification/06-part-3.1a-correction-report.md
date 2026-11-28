@@ -60,10 +60,10 @@ No application code, SQL migrations, build scripts, or Phase 1 / Phase 2 documen
 #### Correction 4: Terminology Finding — Multi-Semantic Usage of "SC"
 * **What was wrong previously:** The documents did not record that the abbreviation "SC" carries contradictory definitions across the system ecosystem.
 * **What was corrected:** Added a dedicated Terminology Finding section in `05-part-3.1-report.md` documenting all four usages with full file and line citations:
-  1. **RM screen label "Sales Component (SC Code)":** `docs/phase-1/09_Integration_Specification.md:36`, `docs/updates/DOCS_UPDATE_PACK.md:449`.
-  2. **Phase 1 & Phase 2 prose "Sales Contract":** `docs/PROJECT_CONTEXT_FOR_CLAUDE.md:70, 88, 101, 304, 383, 429, 490, 546, 583, 790, 791`; `docs/phase-2/2.2-domain-data-model/01-domain-model-and-hierarchy.md:19, 46, 64, 69, 122, 134, 259`; `docs/phase-2/2.2-domain-data-model/02-entity-catalogue-and-attributes.md:36, 59, 229, 686`; `docs/phase-2/2.6-sc-and-completion-state-machine/01-sc-lifecycle-overview-and-states.md:8, 11, 30, 173, 196`.
+  1. **RM screen label "Size Card (SC Code)":** `docs/phase-1/09_Integration_Specification.md:36`, `docs/updates/DOCS_UPDATE_PACK.md:449`.
+  2. **Phase 1 & Phase 2 prose "Size Card":** `docs/PROJECT_CONTEXT_FOR_CLAUDE.md:70, 88, 101, 304, 383, 429, 490, 546, 583, 790, 791`; `docs/phase-2/2.2-domain-data-model/01-domain-model-and-hierarchy.md:19, 46, 64, 69, 122, 134, 259`; `docs/phase-2/2.2-domain-data-model/02-entity-catalogue-and-attributes.md:36, 59, 229, 686`; `docs/phase-2/2.6-sc-and-completion-state-machine/01-sc-lifecycle-overview-and-states.md:8, 11, 30, 173, 196`.
   3. **Phase 2 relational schema table names with "subcontract":** `subcontracts`, `subcontract_products`, `subcontract_operations` across `docs/phase-2/2.1/01...`, `docs/phase-2/2.2/01...`, `docs/phase-2/2.6/01...`.
-  4. **ECR exception intake field "Subcontract order number":** `docs/phase-1/09_Integration_Specification.md:42, 62` (`scNumber`).
+  4. **ECR exception intake field "Size Card number":** `docs/phase-1/09_Integration_Specification.md:42, 62` (`scNumber`).
   - Left open without choosing a canonical term, per prompt instructions.
 
 ---

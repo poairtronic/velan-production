@@ -30,7 +30,7 @@ In accordance with `SKILLS.md §0`, all known conflicts remain formally OPEN wit
 * **Database Standards Status:** **OPEN.** The schema supports both direct quantity inputs and calculated set ratios without schema-level structural modification.
 
 #### Conflict C-3: The "SC" Terminology Problem (OPEN with Recommendation)
-* **Conflict Statement:** "SC" carries four different meanings across systems: RM screen "Sales Component (SC Code)", Phase 1/2 prose "Sales Contract", Phase 2 tables `subcontracts`, and ECR field "Subcontract order number".
+* **Conflict Statement:** "SC" carries four different meanings across systems: RM screen "Size Card (SC Code)", Phase 1/2 prose "Size Card", Phase 2 tables `subcontracts`, and ECR field "Size Card number".
 * **Recommendation:** Adopt neutral technical table names `sc_headers` and `sc_products` (or `sales_contracts`), avoiding "subcontract" unless the business explicitly confirms it represents outsourced vendor fabrication.
 * **Status:** **OPEN.** Submitted for project owner direction before Phase 7 migration authoring.
 

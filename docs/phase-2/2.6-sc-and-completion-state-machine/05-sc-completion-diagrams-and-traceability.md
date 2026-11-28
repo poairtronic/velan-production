@@ -13,7 +13,7 @@ These diagrams illustrate how commercial sales orders are ingested, how physical
 
 ### 2. Comprehensive Mermaid Visual Models
 
-#### Diagram 1: End-to-End Sales Contract (SC) State Machine (`stateDiagram-v2`)
+#### Diagram 1: End-to-End Size Card (SC) State Machine (`stateDiagram-v2`)
 
 ```mermaid
 stateDiagram-v2
@@ -79,7 +79,7 @@ stateDiagram-v2
 
 ```mermaid
 flowchart TD
-    subgraph SC_Header ["Sales Contract SC-4100 (Target: 3 Complete Sets)"]
+    subgraph SC_Header ["Size Card SC-4100 (Target: 3 Complete Sets)"]
         H_STATUS["SC Status: IN_PRODUCTION"]
     end
 
@@ -293,7 +293,7 @@ This design satisfies all requirements across Phase 1 and approved Phase 2 parts
 To maintain complete architectural integrity, items are strictly segregated into confirmed rules, proposed system design, and unresolved business questions:
 
 #### 4.1 Confirmed Business Rules (Frozen Baseline)
-1. **SC as Root Header:** The Sales Contract (`subcontracts`) is the central operational entity governing shop-floor production.
+1. **SC as Root Header:** The Size Card (`subcontracts`) is the central operational entity governing shop-floor production.
 2. **Deterministic Pre-Allocation:** Sets and constituent pieces are bound at creation time, not late-stage matched.
 3. **Product-Level Material Gate:** Raw material readiness is evaluated per product line item (`subcontract_products`).
 4. **Independent Set Dispatch:** Complete sets may be dispatched independently while sibling sets remain in production.

@@ -46,7 +46,7 @@ The system seamlessly evaluates diverse, real-world engineering product configur
 | *Product B Total Demand* | | | | | **8 Physical Pieces** |
 
 #### 2.3 Mathematical Formula for Total Component Demand
-For any given product line item $i$ under Sales Contract $SC$:
+For any given product line item $i$ under Size Card $SC$:
 $$D(SC_i, c) = \text{target\_set\_qty}(SC_i) \times \text{quantity\_per\_set}(c)$$
 Where:
 * $SC_i$ is the subcontract product line item (`subcontract_products`).
@@ -211,7 +211,7 @@ Where:
 $$\text{completed\_set\_qty} = \sum \{S \in \text{Sets}(SC_i) \mid S.\text{is\_final\_qc\_passed} = \text{true}\}$$
 
 #### Level 7: SC Header Production Completion
-The overall Sales Contract header (`subcontracts`) reaches `PRODUCTION_COMPLETE` if and only if:
+The overall Size Card header (`subcontracts`) reaches `PRODUCTION_COMPLETE` if and only if:
 $$\forall i \in \text{Lines}(SC) : \text{completed\_set\_qty}(SC_i) = \text{target\_set\_qty}(SC_i)$$
 The header status transitions automatically to `subcontracts.status = 'PRODUCTION_COMPLETE'`.
 

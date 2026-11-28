@@ -7,7 +7,7 @@
 
 In the Velan Production application, the **Piece** represents the physical unit of shop-floor manufacturing—an actual, serialized component of metal (e.g., Flange `ARG`, Spindle `SPG`, Valve Body `VBM`, Jig Foot `JIG`) machined, measured, inspected, and eventually assembled into a complete valve set.
 
-The primary objective of **Part 2.3 – Piece Lifecycle State Machine** is to specify the complete, deterministic lifecycle of physical pieces from their initial creation at Sales Contract (SC) intake to their final completion or retirement (scrapping). This state machine governs:
+The primary objective of **Part 2.3 – Piece Lifecycle State Machine** is to specify the complete, deterministic lifecycle of physical pieces from their initial creation at Size Card (SC) intake to their final completion or retirement (scrapping). This state machine governs:
 1. Material readiness gating before machining.
 2. Sequential operation progression and measurement recording.
 3. Quality Control (QC) failure holds and Project Manager (PM) dispositions.
@@ -82,7 +82,7 @@ The lifecycle of an individual physical piece is modeled across eight mutually e
 
 | State Code | State Name | Category | Detailed Description & Business Meaning |
 | :--- | :--- | :--- | :--- |
-| `CREATED` | **Created / Initialized** | Transient / Initial | The physical piece entity has been generated in the database upon Sales Contract intake and approval. The piece is assigned its preliminary identity and pre-allocated to its specific Set and BOM slot. Routing operations have been generated from the frozen process template snapshot. |
+| `CREATED` | **Created / Initialized** | Transient / Initial | The physical piece entity has been generated in the database upon Size Card intake and approval. The piece is assigned its preliminary identity and pre-allocated to its specific Set and BOM slot. Routing operations have been generated from the frozen process template snapshot. |
 | `AWAITING_MATERIAL` | **Awaiting Raw Material** | Gated / Blocked | The piece exists and is bound to its set, but physical machining is strictly blocked because raw material has not yet been issued by RM (V-SMART) for this product line (`subcontract_products.material_ready = false`). Also applies to newly spawned replacement pieces awaiting replacement material issuance from RM. Operators cannot open jobs or enter measurements. |
 | `IN_PRODUCTION` | **In Active Production** | Active Execution | Raw material readiness has been confirmed (`material_ready = true`). The first routing operation (or current downstream operation) is `READY` or `OPENED`. Operators actively perform machining, turning, milling, drilling, and record measurement readings against approved tolerances. |
 | `ON_HOLD_QC_FAILED` | **On Hold – QC Failed** | Suspended / Hold | A completed operation on this piece received an official `FAILED` verdict during independent QC inspection. Downstream operations are strictly locked. The piece is physically and logically placed on hold in the shop-floor quarantine zone, awaiting a binding resolution from the Production Manager (PM). |

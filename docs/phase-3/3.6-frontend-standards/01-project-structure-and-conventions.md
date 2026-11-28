@@ -18,7 +18,7 @@ frontend/
 │   │   └── router.tsx            # Route declarations and permission guards
 │   ├── modules/                  # Feature domain modules (matching backend monolith)
 │   │   ├── auth/                 # Login, password reset, session recovery
-│   │   ├── orders/               # Sales Contract intake, import, release
+│   │   ├── orders/               # Size Card intake, import, release
 │   │   ├── planning/             # Process routing templates, workstation queues
 │   │   ├── execution/            # Operator station view, barcode scan, bulk grid
 │   │   ├── quality/              # Blind QC inspection bay, tolerance review

@@ -42,6 +42,20 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- Spring Boot JDBC & Flyway Starters (Phase 7.2) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-jdbc</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-flyway</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-database-postgresql</artifactId>
+        </dependency>
+
         <!-- PostgreSQL JDBC Driver for Neon Connectivity (Phase 4.4) -->
         <dependency>
             <groupId>org.postgresql</groupId>

@@ -8,7 +8,7 @@ To prevent corrupted records, duplicate piece generation, and illegal status pro
 #### 1.1 Unique Constraints (Data Deduplication)
 * `purchase_orders(po_number)`: Prevents duplicate commercial orders.
 * `subcontracts(sc_number)`: Guarantees exact 1:1 mapping with RM (V-SMART) contracts.
-* `subcontract_products(sc_id, line_number)`: Enforces line-item uniqueness per Sales Contract. Because subcontracts may order the same manufactured catalog product across multiple line items (with different delivery dates, target set quantities, or engineering configurations), uniqueness is defined on `(sc_id, line_number)` rather than `(sc_id, product_id)`.
+* `subcontract_products(sc_id, line_number)`: Enforces line-item uniqueness per Size Card. Because subcontracts may order the same manufactured catalog product across multiple line items (with different delivery dates, target set quantities, or engineering configurations), uniqueness is defined on `(sc_id, line_number)` rather than `(sc_id, product_id)`.
 * `products(product_code)`: Prevents duplicate engineering catalog entries.
 * `process_templates(template_code, version)`: Enforces unique versioning per template.
 * `pieces(serial_number)`: **Absolute Invariant:** Every manufactured physical piece must possess a system-wide unique physical serial number.
@@ -154,7 +154,7 @@ Every relevant Phase 1 requirement and business rule has been cross-checked agai
 4. **Separation of Material Gate and Operation Sequencing:**
    * *Confirmed Baseline:* Material readiness is the mandatory prerequisite before beginning production. Once material is confirmed ready, **only the first eligible operation (sequence 10)** becomes `READY`. Subsequent operations remain strictly in `PENDING` and become `READY` only sequentially after previous operation completion and QC inspection pass. Operations are never made `READY` simultaneously. Operators cannot enter measurements before the material gate is satisfied.
 5. **SC Line-Item Identity and Multi-Line Support:**
-   * *Confirmed Baseline:* A Sales Contract can contain multiple line items ordering the same manufactured catalog product (e.g., separate lines with different delivery dates, quantities, or drawing revisions). Uniqueness is defined by `UNIQUE (sc_id, line_number)` on `subcontract_products` rather than `(sc_id, product_id)`.
+   * *Confirmed Baseline:* A Size Card can contain multiple line items ordering the same manufactured catalog product (e.g., separate lines with different delivery dates, quantities, or drawing revisions). Uniqueness is defined by `UNIQUE (sc_id, line_number)` on `subcontract_products` rather than `(sc_id, product_id)`.
    * *Status:* **Fully resolved**. The data model supports multi-line contracts with line-level identity (`line_number`) and external reference (`rm_line_item_id`).
 6. **Separation of Production Completion from Quality, Packing, and Delivery Milestones:**
    * *Confirmed Baseline:* Set completeness is decomposed into distinct, independent boolean flags: `is_production_complete`, `is_final_qc_passed`, `is_packed`, and `is_delivered`.

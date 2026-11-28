@@ -7,14 +7,14 @@ The following table documents all primary entity-to-entity relationships, cardin
 
 | Source Entity | Target Entity | Cardinality | Foreign Key Column | On Delete Action | Business Context & Invariant |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| `purchase_orders` | `subcontracts` | `1 : N` | `subcontracts.po_id` | `RESTRICT` | A customer PO groups multiple SCs; deleting a PO with active SCs is strictly blocked. |
-| `subcontracts` | `subcontract_products` | `1 : N` | `subcontract_products.sc_id` | `RESTRICT` | An SC can contain multiple ordered product line items, identified by `line_number` (`UNIQUE (sc_id, line_number)`). The same product can appear on multiple lines with different quantities or delivery dates. |
-| `products` | `subcontract_products` | `1 : N` | `subcontract_products.product_id` | `RESTRICT` | Links manufactured catalog product to contract line item. A product may be referenced by multiple lines across or within SCs. |
+| `purchase_orders` | `sc_headers` | `1 : N` | `sc_headers.po_id` | `RESTRICT` | A customer PO groups multiple SCs; deleting a PO with active SCs is strictly blocked. |
+| `sc_headers` | `sc_products` | `1 : N` | `sc_products.sc_id` | `RESTRICT` | An SC can contain multiple ordered product line items, identified by `line_number` (`UNIQUE (sc_id, line_number)`). The same product can appear on multiple lines with different quantities or delivery dates. |
+| `products` | `sc_products` | `1 : N` | `sc_products.product_id` | `RESTRICT` | Links manufactured catalog product to contract line item. A product may be referenced by multiple lines across or within SCs. |
 | `products` | `bom_lines` | `1 : N` | `bom_lines.product_id` | `RESTRICT` | A product defines its multi-component BOM structure. |
-| `subcontracts` | `sc_revisions` | `1 : N` | `sc_revisions.sc_id` | `CASCADE` | SC contract revisions belong entirely to the parent SC. |
-| `subcontract_products` | `assembled_sets` | `1 : N` | `assembled_sets.sc_product_id` | `RESTRICT` | An SC product produces N complete assembled sets equal to `target_set_qty`. |
+| `sc_headers` | `sc_revisions` | `1 : N` | `sc_revisions.sc_id` | `CASCADE` | SC contract revisions belong entirely to the parent SC. |
+| `sc_products` | `assembled_sets` | `1 : N` | `assembled_sets.sc_product_id` | `RESTRICT` | An SC product produces N complete assembled sets equal to `target_set_qty`. |
 | `assembled_sets` | `pieces` | `1 : N` | `pieces.assembled_set_id` | `RESTRICT` | **Deterministic Set Membership:** Every physical piece is pre-allocated and bound directly to its designated set upon SC intake. |
-| `subcontract_products` | `pieces` | `1 : N` | `pieces.sc_product_id` | `RESTRICT` | An SC product spawns total pieces = $\sum (\text{target\_sets} \times \text{qty\_per\_set})$. |
+| `sc_products` | `pieces` | `1 : N` | `pieces.sc_product_id` | `RESTRICT` | An SC product spawns total pieces = $\sum (\text{target\_sets} \times \text{qty\_per\_set})$. |
 | `bom_lines` | `pieces` | `1 : N` | `pieces.bom_line_id` | `RESTRICT` | Every physical piece represents an instance of a specific BOM component. |
 | `process_templates` | `process_template_steps` | `1 : N` | `process_template_steps.template_id` | `CASCADE` | Steps define the ordered routing of a master template. |
 | `process_templates` | `process_template_snapshots` | `1 : N` | `process_template_snapshots.template_id` | `RESTRICT` | Snapshots preserve point-in-time routing rules. |
@@ -29,14 +29,14 @@ The following table documents all primary entity-to-entity relationships, cardin
 | `pieces` (Replacement) | `piece_replacement_lineage` | `1 : 1` | `piece_replacement_lineage.replacement_child_piece_id` | `RESTRICT` | Replacement piece points back to its scrapped ancestor. |
 | `assembled_sets` | `set_component_allocations` | `1 : N` | `set_component_allocations.set_id` | `CASCADE` | A set allocates required finished pieces according to BOM ratios. |
 | `pieces` | `set_component_allocations` | `1 : 1` | `set_component_allocations.piece_id` | `RESTRICT` | A piece can be allocated to at most one assembled set. |
-| `subcontracts` | `vendor_dc_trackers` | `1 : N` | `vendor_dc_trackers.sc_id` | `RESTRICT` | External processing tracks RM DC numbers linked to the SC. |
+| `sc_headers` | `vendor_dc_trackers` | `1 : N` | `vendor_dc_trackers.sc_id` | `RESTRICT` | External processing tracks RM DC numbers linked to the SC. |
 | `departments` | `users` | `1 : N` | `users.department_id` | `SET NULL` | Employees belong to a primary department. |
 | `departments` | `machines` | `1 : N` | `machines.department_id` | `RESTRICT` | Machines reside within a specific shop-floor department. |
 | `users` | `user_roles` | `1 : N` | `user_roles.user_id` | `CASCADE` | User-to-role multi-role mappings. |
 | `roles` | `user_roles` | `1 : N` | `user_roles.role_id` | `RESTRICT` | Roles assigned to users. |
 | `users` | `user_permission_overrides` | `1 : N` | `user_permission_overrides.user_id` | `CASCADE` | Individual Admin permission overrides per user. |
 | `departments` | `production_targets` | `1 : N` | `production_targets.department_id` | `SET NULL` | Department-level production throughput targets. |
-| `subcontracts` | `production_targets` | `1 : N` | `production_targets.sc_id` | `CASCADE` | Contract-level production targets. |
+| `sc_headers` | `production_targets` | `1 : N` | `production_targets.sc_id` | `CASCADE` | Contract-level production targets. |
 
 ---
 
@@ -284,15 +284,15 @@ stateDiagram-v2
 ### 7. Product Material Readiness and Operation Sequencing Model
 
 To mirror actual factory operations and maintain clean integration boundaries with RM (V-SMART):
-* **SC Header vs. Product Line Items:** The Sales Contract header (`subcontracts`) groups the commercial order. The specific manufactured products ordered are modeled as `subcontract_products`.
-* **Independent Material Readiness Per Product:** Material readiness is tracked strictly at the **Product line item level** (`subcontract_products.material_ready`).
+* **SC Header vs. Product Line Items:** The Size Card header (`sc_headers`) groups the commercial order. The specific manufactured products ordered are modeled as `sc_products`.
+* **Independent Material Readiness Per Product:** Material readiness is tracked strictly at the **Product line item level** (`sc_products.material_ready`).
   - In multi-product SCs (e.g., SC002 containing Product 1: Gate Valve and Product 2: Globe Valve), each product tracks material readiness independently.
   - When RM confirms material issue for Product 1, only Product 1's `material_ready` flag transitions to `true`.
   - Product 2 remains `material_ready = false`.
   - Pieces belonging to Product 1 become eligible for production execution; pieces belonging to Product 2 remain locked and cannot be started.
   - The system **never** assumes the entire SC is ready when only one product has received material.
 * **Dual Trigger Mechanisms:**
-  1. **Manual Toggle:** PM or authorized Stores personnel can manually toggle `material_ready = true` on a specific `subcontract_products` record.
+  1. **Manual Toggle:** PM or authorized Stores personnel can manually toggle `material_ready = true` on a specific `sc_products` record.
   2. **Automatic RM Issuance:** When RM emits a material issue event for that specific product/subcontract, `material_status` is updated to `'ISSUED'` and `material_ready` is automatically set to `true` with `material_issued_at`.
 * **Traceability Granularity (Pending Inspection):** The exact granularity of RM material identification (heat numbers, mill batch codes, raw-bar identifiers) is recorded as pending inspection of actual RM API responses during integration phase. The baseline data model does not make unverified assertions regarding RM piece-level heat codes.
 * **Separation of Material Gate and Operation Sequencing:**

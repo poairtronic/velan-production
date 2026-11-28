@@ -33,7 +33,7 @@ Unique constraints physically enforce core Phase 1 business invariants:
 
 | Constraint Name | Target Table | Columns Covered | Enforced Business Invariant |
 | :--- | :--- | :--- | :--- |
-| **`uq_subcontracts_sc_number`** | `subcontracts` | `(sc_number)` | Exactly one production record per RM Sales Contract (`BR-001, BR-003`). |
+| **`uq_subcontracts_sc_number`** | `subcontracts` | `(sc_number)` | Exactly one production record per RM Size Card (`BR-001, BR-003`). |
 | **`uq_subcontract_products_sc_line`**| `subcontract_products`| `(sc_id, line_number)` | Unique line item per SC; permits duplicate products across lines (`BR-004`). |
 | **`uq_pieces_serial_number`** | `pieces` | `(serial_number)` | System-wide unique physical identity for every steel piece (`BR-007`). |
 | **`uq_set_allocations_piece`** | `set_component_allocations`| `(piece_id)` | A piece can be allocated to at most one assembled set (`BR-007`). |

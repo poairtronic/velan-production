@@ -9,6 +9,20 @@ on:
 jobs:
   backend:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: velan_ci
+          POSTGRES_USER: velan_ci
+          POSTGRES_PASSWORD: ci_only_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     defaults:
       run:
         working-directory: backend
@@ -16,6 +30,9 @@ jobs:
       SPRING_PROFILES_ACTIVE: local
       # CI-only dummy Base64-encoded 32+ byte value (not a real secret)
       JWT_SECRET: Q0lfT05MWV9EVU1NWV9KV1RfU0VDUkVUXzMyX0JZVEVTXzEyMzQ=
+      DATABASE_DIRECT_URL: jdbc:postgresql://localhost:5432/velan_ci
+      DB_USER: velan_ci
+      DB_PASSWORD: ci_only_password
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4

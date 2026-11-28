@@ -78,7 +78,7 @@ The application `@RestControllerAdvice` global exception handler translates doma
 | `AUTH_USER_DISABLED` | 403 | User account is deactivated or soft-deleted by Admin. |
 | `AUTH_STATION_UNAUTHORIZED` | 403 | Operator user is not assigned to the requested work station. |
 
-#### 2.2 Sales Contracts & Orders (`ORDER`)
+#### 2.2 Size Cards & Orders (`ORDER`)
 | Error Code | HTTP | When Thrown |
 |:---|:---:|:---|
 | `ORDER_NOT_FOUND` | 404 | Requested SC or order number does not exist. |

@@ -73,9 +73,9 @@ The relational persistence schema requires six tables (modeled in words):
 |:---|:---|:---|
 | **AUTH** | `AUTH:LOGIN` | Authenticate into application |
 | **AUTH** | `AUTH:PASSWORD_RESET` | Initiate password reset |
-| **ORDER** | `ORDER:SC_VIEW` | View Sales Contracts and product lines |
-| **ORDER** | `ORDER:SC_CREATE` | Create Sales Contract manually |
-| **ORDER** | `ORDER:SC_IMPORT` | Bulk import Sales Contracts via Excel |
+| **ORDER** | `ORDER:SC_VIEW` | View Size Cards and product lines |
+| **ORDER** | `ORDER:SC_CREATE` | Create Size Card manually |
+| **ORDER** | `ORDER:SC_IMPORT` | Bulk import Size Cards via Excel |
 | **ORDER** | `ORDER:SC_RELEASE` | Release contract products to production |
 | **PLANNING** | `PLANNING:TEMPLATE_VIEW` | View process routing templates |
 | **PLANNING** | `PLANNING:TEMPLATE_CREATE` | Create routing template draft |

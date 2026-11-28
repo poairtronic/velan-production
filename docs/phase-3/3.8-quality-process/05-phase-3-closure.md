@@ -29,7 +29,7 @@ Every open question, architectural conflict, and unverified item recorded across
 |:---:|:---|:---|:---:|:---:|
 | **C-1** | **Completion Workflow Model:** D-10 automatic cascade vs. Phase 2.6 assembled sets, packing checklists, and dispatch bays. | • Option A: D-10 (automatic Packed/Delivered; zero screens).<br/>• Option B: Phase 2.6 (assembled sets, packing, bays). | Phase 7 / 26 | **NO** |
 | **C-2** | **Piece Count Derivation Source:** D-02 RM line quantity vs. target sets $\times$ component BOM ratio. | • Option A: Direct RM product quantity (D-02).<br/>• Option B: Calculated target sets $\times$ BOM ratio. | Phase 7 / 18 | **NO** |
-| **C-3** | **The "SC" Terminology Problem:** SC as Sales Contract vs. Subcontract vs. Sales Component. | • Adopt neutral technical names `sc_headers` and `sc_products` (or `sales_contracts`). | Phase 7 / 18 | **NO** |
+| **C-3** | **The "SC" Terminology Problem:** SC as Size Card vs. Subcontract vs. Size Card. | • Adopt neutral technical names `sc_headers` and `sc_products` (or `sales_contracts`). | Phase 7 / 18 | **NO** |
 | **O-01** | **PO Reference Date:** Map `purchase_orders.reference_date` as contract delivery deadline. | • Confirm mapping or add explicit delivery date field. | Phase 13 | **NO** |
 | **O-04** | **ECR Additional Process:** Native intake vs. `[ADDITIONAL PROCESS]` prefix in `defectDescription`. | • Awaiting ECR team confirmation; fallback to prefix. | Phase 14 / 31 | **NO** |
 | **O-09** | **Shop-Floor Credential Policy:** Credential type and length for Operator and QC roles. | • Option A: Username + password.<br/>• Option B: Employee ID + 6-digit PIN.<br/>• Option C: Badge tap + 4-digit PIN. | Phase 8 / 24 | **NO** |

@@ -72,7 +72,7 @@ void shouldRejectIllegalTransitions(PieceStatus from, PieceEvent event) {
 5. **Replacement Piece Lineage:** Child piece generation inheriting set slot (`-R1`).
 6. **Tolerance Revision Lifecycle:** `DRAFT` $\to$ `SUBMITTED` $\to$ `APPROVED` $\to$ `SUPERSEDED`.
 7. **Process Template Versioning:** `DRAFT` $\to$ `APPROVED` $\to$ `ACTIVE` $\to$ `DEPRECATED`.
-8. **Sales Contract Header:** `DRAFT` $\to$ `SUBMITTED` $\to$ `IN_PRODUCTION` $\dots$ `DELIVERED`.
+8. **Size Card Header:** `DRAFT` $\to$ `SUBMITTED` $\to$ `IN_PRODUCTION` $\dots$ `DELIVERED`.
 9. **Product Line Item:** `PENDING_MATERIAL` $\to$ `IN_PRODUCTION` $\to$ `COMPLETED`.
 10. **ECR Outbox Events:** `PENDING` $\to$ `SENDING` $\to$ `SENT` / `AMBIGUOUS_TIMEOUT` / `DEAD_LETTER`.
 

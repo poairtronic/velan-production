@@ -51,7 +51,11 @@ public class NeonConnectivityTests {
         }
 
         System.out.println("Attempting connection to Neon database...");
-        try (Connection conn = DriverManager.getConnection(jdbcUrl);
+        String dbUser = System.getenv("DB_USER");
+        String dbPass = System.getenv("DB_PASSWORD");
+        try (Connection conn = (dbUser != null && !dbUser.isBlank())
+                ? DriverManager.getConnection(jdbcUrl, dbUser, dbPass != null ? dbPass : "")
+                : DriverManager.getConnection(jdbcUrl);
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery("SELECT 1")) {
 

@@ -102,7 +102,7 @@ To guarantee that measurements, QC results, and audit trails cannot be alteredâ€
 In accordance with Phase 2 Domain Modeling (`BR-007, Part 2.2 Â§1.1`), the `pieces` table separately stores discrete structural components alongside a generated unique serial string:
 
 1. **Discrete Normalized Columns:**
-   - `sc_id` (`UUID NOT NULL`): Originating Sales Contract.
+   - `sc_id` (`UUID NOT NULL`): Originating Size Card.
    - `sc_product_id` (`UUID NOT NULL`): Parent product line item.
    - `assembled_set_id` (`UUID`): Allocated valve set (nullable until set assignment).
    - `set_sequence_number` (`INTEGER NOT NULL`): Set sequence index within contract line.

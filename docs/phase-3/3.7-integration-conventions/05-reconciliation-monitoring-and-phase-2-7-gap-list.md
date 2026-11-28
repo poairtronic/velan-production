@@ -7,7 +7,7 @@
 
 #### 1.1 Cross-System Reconciliation Requirements (Phase 42)
 To maintain commercial data integrity between independent enterprise databases without distributed two-phase commits, the platform provides a dedicated Admin/PM **Reconciliation Console**:
-1. **Sales Contract & Quantity Discrepancy Auditing:**
+1. **Size Card & Quantity Discrepancy Auditing:**
    * Automated diff scans run daily comparing active `sc_headers` and `sc_products` against RM `sales_order_components` and `rm_items`.
    * Flags:
      - SCs approved in RM that failed to intake into Production.

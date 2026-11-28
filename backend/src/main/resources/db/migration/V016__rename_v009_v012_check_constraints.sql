@@ -1,0 +1,17 @@
+-- Phase 7.8: Rename remaining auto-generated inline CHECK constraints from V009-V012 to chk_ standard
+
+ALTER TABLE outbox_events RENAME CONSTRAINT outbox_events_attempts_check TO chk_outbox_events_attempts;
+ALTER TABLE outbox_events RENAME CONSTRAINT outbox_events_status_check TO chk_outbox_events_status;
+
+ALTER TABLE pm_dispositions RENAME CONSTRAINT pm_dispositions_disposition_check TO chk_pm_dispositions_disposition;
+
+ALTER TABLE qc_exceptions RENAME CONSTRAINT qc_exceptions_ecr_status_check TO chk_qc_exceptions_ecr_status;
+ALTER TABLE qc_exceptions RENAME CONSTRAINT qc_exceptions_exception_type_check TO chk_qc_exceptions_exception_type;
+ALTER TABLE qc_exceptions RENAME CONSTRAINT qc_exceptions_status_check TO chk_qc_exceptions_status;
+
+ALTER TABLE rm_sync_history RENAME CONSTRAINT rm_sync_history_records_read_check TO chk_rm_sync_history_records_read;
+ALTER TABLE rm_sync_history RENAME CONSTRAINT rm_sync_history_records_written_check TO chk_rm_sync_history_records_written;
+ALTER TABLE rm_sync_history RENAME CONSTRAINT rm_sync_history_status_check TO chk_rm_sync_history_status;
+
+ALTER TABLE vendor_dc_trackers RENAME CONSTRAINT vendor_dc_trackers_quantity_sent_check TO chk_vendor_dc_trackers_quantity_sent;
+ALTER TABLE vendor_dc_trackers RENAME CONSTRAINT vendor_dc_trackers_status_check TO chk_vendor_dc_trackers_status;

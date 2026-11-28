@@ -21,7 +21,7 @@ This document provides the exhaustive Entity Catalogue for the Velan Production 
 
 #### 2.1 Entity: `purchase_orders`
 * **Owning Module:** `order`
-* **Business Purpose:** Represents the overarching commercial purchase order from the customer (e.g., Shell Global, Saudi Aramco), grouping one or more production Sales Contracts.
+* **Business Purpose:** Represents the overarching commercial purchase order from the customer (e.g., Shell Global, Saudi Aramco), grouping one or more production Size Cards.
 * **Attributes:**
 
 | Attribute | Data Type | Nullable | Key / Constraint | Description & Business Meaning |
@@ -33,9 +33,9 @@ This document provides the exhaustive Entity Catalogue for the Velan Production 
 | `delivery_due_date`| `DATE` | Yes | - | Customer's contractual required delivery date. |
 | `status` | `VARCHAR(50)` | No | CHECK | Current state (`ACTIVE`, `COMPLETED`, `CANCELLED`). |
 
-#### 2.2 Entity: `subcontracts` (Sales Contracts / SC)
+#### 2.2 Entity: `sc_headers` (Size Cards / SC)
 * **Owning Module:** `order`
-* **Business Purpose:** Represents the commercial manufacturing order header received from RM (V-SMART). Can contain one or multiple manufactured products (`subcontract_products`).
+* **Business Purpose:** Represents the commercial manufacturing order header received from RM (V-SMART). Can contain one or multiple manufactured products (`sc_products`).
 * **Attributes:**
 
 | Attribute | Data Type | Nullable | Key / Constraint | Description & Business Meaning |
@@ -46,17 +46,17 @@ This document provides the exhaustive Entity Catalogue for the Velan Production 
 | `po_id` | `UUID` | No | FK (`purchase_orders.id`) | Parent commercial purchase order. |
 | `status` | `VARCHAR(50)` | No | INDEX | SC header state (`INTAKE`, `ACTIVE`, `COMPLETED`, `CANCELLED`). |
 
-#### 2.3 Entity: `subcontract_products` (SC Products)
+#### 2.3 Entity: `sc_products` (SC Products)
 * **Owning Module:** `order`
 * **Business Purpose:** Represents a specific manufactured product line item ordered under an SC. Governs target set quantity and acts as the **independent material readiness gate** for that product line.
-* **Line-Item Identity & Multi-Line Support:** Commercial subcontracts frequently order the same catalog product across multiple line items (e.g., Line 1: 10 sets of Product A for October delivery with standard tolerance; Line 2: 5 sets of Product A for November delivery with custom test procedures). Therefore, line-item uniqueness is governed by `UNIQUE (sc_id, line_number)`, allowing the same `product_id` to appear on multiple distinct line items within the same SC.
-* **Product-Level Material Gate Rule:** Material readiness is tracked per product line item (`subcontract_products.material_ready`). In multi-line SCs, material issued for one product line does **not** make unrelated lines ready. Each line item independently gates its constituent pieces.
+* **Line-Item Identity & Multi-Line Support:** Commercial sc_headers frequently order the same catalog product across multiple line items (e.g., Line 1: 10 sets of Product A for October delivery with standard tolerance; Line 2: 5 sets of Product A for November delivery with custom test procedures). Therefore, line-item uniqueness is governed by `UNIQUE (sc_id, line_number)`, allowing the same `product_id` to appear on multiple distinct line items within the same SC.
+* **Product-Level Material Gate Rule:** Material readiness is tracked per product line item (`sc_products.material_ready`). In multi-line SCs, material issued for one product line does **not** make unrelated lines ready. Each line item independently gates its constituent pieces.
 * **Attributes:**
 
 | Attribute | Data Type | Nullable | Key / Constraint | Description & Business Meaning |
 | :--- | :--- | :--- | :--- | :--- |
 | `id` | `UUID` | No | PK | Internal system identifier. |
-| `sc_id` | `UUID` | No | FK (`subcontracts.id`), INDEX | Parent Sales Contract header. |
+| `sc_id` | `UUID` | No | FK (`sc_headers.id`), INDEX | Parent Size Card header. |
 | `line_number` | `INTEGER` | No | UNIQUE with `sc_id` | 1-indexed contract line item number (`1, 2, 3...`) within the SC header. |
 | `rm_line_item_id` | `VARCHAR(100)` | Yes | - | External line-item identifier provided by RM (V-SMART). |
 | `product_id` | `UUID` | No | FK (`products.id`), INDEX | Specific manufactured catalog product ordered. |
@@ -77,8 +77,8 @@ This document provides the exhaustive Entity Catalogue for the Velan Production 
 | Attribute | Data Type | Nullable | Key / Constraint | Description & Business Meaning |
 | :--- | :--- | :--- | :--- | :--- |
 | `id` | `UUID` | No | PK | Internal system identifier. |
-| `sc_id` | `UUID` | No | FK (`subcontracts.id`) | Target SC being revised. |
-| `sc_product_id` | `UUID` | Yes | FK (`subcontract_products.id`)| Specific SC product being revised (if product-specific). |
+| `sc_id` | `UUID` | No | FK (`sc_headers.id`) | Target SC being revised. |
+| `sc_product_id` | `UUID` | Yes | FK (`sc_products.id`)| Specific SC product being revised (if product-specific). |
 | `revision_number` | `INTEGER` | No | - | Sequential revision count (`1, 2, 3...`). |
 | `previous_target_qty`| `INTEGER` | No | - | Target set quantity prior to change. |
 | `new_target_qty` | `INTEGER` | No | - | Revised target set quantity. |
@@ -169,7 +169,7 @@ This document provides the exhaustive Entity Catalogue for the Velan Production 
 | Attribute | Data Type | Nullable | Key / Constraint | Description & Business Meaning |
 | :--- | :--- | :--- | :--- | :--- |
 | `id` | `UUID` | No | PK | Internal system identifier. |
-| `sc_id` | `UUID` | No | FK (`subcontracts.id`) | Target SC. |
+| `sc_id` | `UUID` | No | FK (`sc_headers.id`) | Target SC. |
 | `component_code` | `VARCHAR(50)` | No | - | Component covered. |
 | `revision_number` | `INTEGER` | No | - | Revision count (`1, 2...`). |
 | `source_filename` | `VARCHAR(255)` | No | - | Original uploaded Excel or PDF filename. |
@@ -204,7 +204,7 @@ This document provides the exhaustive Entity Catalogue for the Velan Production 
 | Attribute | Data Type | Nullable | Key / Constraint | Description & Business Meaning |
 | :--- | :--- | :--- | :--- | :--- |
 | `id` | `UUID` | No | PK | Internal system identifier. |
-| `sc_id` | `UUID` | No | FK (`subcontracts.id`) | Target SC. |
+| `sc_id` | `UUID` | No | FK (`sc_headers.id`) | Target SC. |
 | `component_code` | `VARCHAR(50)` | Yes | - | Linked component. |
 | `document_name` | `VARCHAR(255)` | No | - | Filename. |
 | `document_type` | `VARCHAR(50)` | No | CHECK | `CAD_2D_PDF`, `CAD_3D_STEP`, `INSPECTION_PLAN`. |
@@ -226,8 +226,8 @@ This document provides the exhaustive Entity Catalogue for the Velan Production 
 | Attribute | Data Type | Nullable | Key / Constraint | Description & Business Meaning |
 | :--- | :--- | :--- | :--- | :--- |
 | `id` | `UUID` | No | PK | Internal system identifier. |
-| `sc_id` | `UUID` | No | FK (`subcontracts.id`), INDEX | Originating Sales Contract. |
-| `sc_product_id` | `UUID` | No | FK (`subcontract_products.id`), INDEX | Specific SC Product line item. Material readiness derived from here. |
+| `sc_id` | `UUID` | No | FK (`sc_headers.id`), INDEX | Originating Size Card. |
+| `sc_product_id` | `UUID` | No | FK (`sc_products.id`), INDEX | Specific SC Product line item. Material readiness derived from here. |
 | `assembled_set_id` | `UUID` | No | FK (`assembled_sets.id`), INDEX | **Deterministic Parent Set.** Bound at SC intake. |
 | `set_sequence_number`| `INTEGER` | No | INDEX | Set index (`1, 2, 3...`) within the SC product. |
 | `bom_line_id` | `UUID` | No | FK (`bom_lines.id`) | Component type definition. |
@@ -243,7 +243,7 @@ This document provides the exhaustive Entity Catalogue for the Velan Production 
 * **Owning Module:** `execution`
 * **Business Purpose:** An individual routing operation assigned to a physical piece (e.g., Piece #1 - Step 20: CNC Milling).
 * **Material Gate vs. Operation Sequencing:**
-  - **Prerequisite Material Gate:** Machine operators cannot open or enter measurements for an operation until parent product material readiness is confirmed (`material_ready = true` on `subcontract_products`).
+  - **Prerequisite Material Gate:** Machine operators cannot open or enter measurements for an operation until parent product material readiness is confirmed (`material_ready = true` on `sc_products`).
   - **Strict Sequential Progression:** When product material readiness is confirmed, **only the first eligible operation (sequence 10)** transitions from `PENDING` to `READY`. Subsequent operations (sequence 20, 30...) remain strictly in `PENDING` and transition to `READY` only sequentially after the preceding operation completes and passes its required QC inspection.
   - **No Simultaneous Ready State:** Operations are never made `READY` simultaneously.
   - **Measurement Entry Blockage:** Measurement entry is prohibited for any operation that is not in `READY` or `OPENED` status.
@@ -416,7 +416,7 @@ This document provides the exhaustive Entity Catalogue for the Velan Production 
 | `id` | `UUID` | No | PK | Internal system identifier. |
 | `vendor_id` | `UUID` | No | FK (`vendors.id`) | External vendor. |
 | `rm_dc_number` | `VARCHAR(100)` | No | INDEX | Official DC number created and issued in RM. |
-| `sc_id` | `UUID` | No | FK (`subcontracts.id`) | Associated SC. |
+| `sc_id` | `UUID` | No | FK (`sc_headers.id`) | Associated SC. |
 | `dispatched_qty` | `INTEGER` | No | - | Count of pieces dispatched on DC. |
 | `returned_qty` | `INTEGER` | No | DEFAULT `0` | Count of pieces confirmed received by RM Inward. |
 | `pending_balance_qty`| `INTEGER` | No | - | Remaining pieces at vendor (`dispatched - returned`). |
@@ -432,7 +432,7 @@ This document provides the exhaustive Entity Catalogue for the Velan Production 
 #### 8.1 Entity: `assembled_sets`
 * **Owning Module:** `dispatch`
 * **Business Purpose:** Represents a specific, numbered assembled set unit (e.g., Set #1 of SC002 - Product 1) fulfilling one complete unit of the target product.
-* **Deterministic Allocation Rule:** Set units are created deterministically upon SC intake based on `subcontract_products.target_set_qty`. Each piece generated for the product is immediately bound to its target `assembled_set_id`.
+* **Deterministic Allocation Rule:** Set units are created deterministically upon SC intake based on `sc_products.target_set_qty`. Each piece generated for the product is immediately bound to its target `assembled_set_id`.
 * **Confirmed Sequential Lifecycle Sequence:**
   `BUILDING` → `PRODUCTION_COMPLETE` → `FINAL_QC_PASSED` → `PACKING_CONFIRMED` → `DISPATCH_PENDING` → `DELIVERED`.
 * **Strict Separation & Completion Rules:**
@@ -448,8 +448,8 @@ This document provides the exhaustive Entity Catalogue for the Velan Production 
 | :--- | :--- | :--- | :--- | :--- |
 | `id` | `UUID` | No | PK | Internal system identifier. |
 | `set_identifier` | `VARCHAR(100)` | No | UNIQUE, INDEX | Human-readable set code (e.g., `SET-SC002-01`). |
-| `sc_id` | `UUID` | No | FK (`subcontracts.id`), INDEX | Associated SC header. |
-| `sc_product_id` | `UUID` | No | FK (`subcontract_products.id`), INDEX | Specific SC Product line item. |
+| `sc_id` | `UUID` | No | FK (`sc_headers.id`), INDEX | Associated SC header. |
+| `sc_product_id` | `UUID` | No | FK (`sc_products.id`), INDEX | Specific SC Product line item. |
 | `set_sequence_number`| `INTEGER` | No | - | Set index (`1, 2, 3...`) for this product. |
 | `is_production_complete`| `BOOLEAN` | No | DEFAULT `false` | True when 100% of pre-allocated component pieces have completed all required machining operations (`PASSED` or `CONCESSION_ACCEPTED`). |
 | `is_final_qc_passed` | `BOOLEAN` | No | DEFAULT `false` | True when the set has passed comprehensive Final QC inspection. |
@@ -500,8 +500,8 @@ This document provides the exhaustive Entity Catalogue for the Velan Production 
 | Attribute | Data Type | Nullable | Key / Constraint | Description & Business Meaning |
 | :--- | :--- | :--- | :--- | :--- |
 | `id` | `UUID` | No | PK | Internal system identifier. |
-| `sc_id` | `UUID` | No | FK (`subcontracts.id`) | Associated SC. |
-| `sc_product_id` | `UUID` | Yes | FK (`subcontract_products.id`)| Associated SC Product line item. |
+| `sc_id` | `UUID` | No | FK (`sc_headers.id`) | Associated SC. |
+| `sc_product_id` | `UUID` | Yes | FK (`sc_products.id`)| Associated SC Product line item. |
 | `dispatch_challan_no`| `VARCHAR(100)`| No | UNIQUE | Outgoing gate pass / delivery document number. |
 | `dispatched_by_user_id`| `UUID` | No | FK (`users.id`) | Dispatch employee. |
 | `carrier_name` | `VARCHAR(150)` | Yes | - | Logistics transport provider. |
@@ -509,7 +509,7 @@ This document provides the exhaustive Entity Catalogue for the Velan Production 
 | `dispatched_set_ids`| `UUID[]` | No | - | Array of complete Set IDs dispatched. |
 | `dispatched_at` | `TIMESTAMPTZ` | No | DEFAULT `NOW()` | Exact dispatch timestamp (sets `assembled_sets.delivered_at`). |
 | `id` | `UUID` | No | PK | Internal system identifier. |
-| `sc_id` | `UUID` | No | FK (`subcontracts.id`) | Associated SC. |
+| `sc_id` | `UUID` | No | FK (`sc_headers.id`) | Associated SC. |
 | `dispatch_challan_no`| `VARCHAR(100)`| No | UNIQUE | Outgoing gate pass / delivery document number. |
 | `dispatched_by_user_id`| `UUID` | No | FK (`users.id`) | Dispatch employee. |
 | `carrier_name` | `VARCHAR(150)` | Yes | - | Logistics transport provider. |
@@ -683,7 +683,7 @@ This document provides the exhaustive Entity Catalogue for the Velan Production 
 
 #### 11.2 Entity: `import_records`
 * **Owning Module:** `order`
-* **Business Purpose:** Tracks batch imports of Sales Contracts, tolerance sheets, or provisional manual contract intakes.
+* **Business Purpose:** Tracks batch imports of Size Cards, tolerance sheets, or provisional manual contract intakes.
 * **Attributes:**
 
 | Attribute | Data Type | Nullable | Key / Constraint | Description & Business Meaning |
@@ -704,7 +704,7 @@ This document provides the exhaustive Entity Catalogue for the Velan Production 
 | Attribute | Data Type | Nullable | Key / Constraint | Description & Business Meaning |
 | :--- | :--- | :--- | :--- | :--- |
 | `id` | `UUID` | No | PK | Internal system identifier. |
-| `sc_id` | `UUID` | Yes | FK (`subcontracts.id`) | Optional target linked to specific SC. |
+| `sc_id` | `UUID` | Yes | FK (`sc_headers.id`) | Optional target linked to specific SC. |
 | `department_id` | `UUID` | Yes | FK (`departments.id`) | Optional department-specific target. |
 | `target_period` | `VARCHAR(50)` | No | CHECK | `DAILY`, `WEEKLY`, `MONTHLY`. |
 | `target_date` | `DATE` | No | INDEX | Start date of target period. |
