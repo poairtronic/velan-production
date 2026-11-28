@@ -5,6 +5,7 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Objects;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -40,7 +41,7 @@ public class NeonConnectivityTests {
                 "DATABASE_URL is not configured with live Neon credentials; skipping Neon connectivity test.");
 
         // Normalize JDBC protocol prefix if necessary
-        String jdbcUrl = dbUrl;
+        String jdbcUrl = Objects.requireNonNull(dbUrl);
         if (!jdbcUrl.startsWith("jdbc:")) {
             jdbcUrl = "jdbc:" + jdbcUrl;
         }

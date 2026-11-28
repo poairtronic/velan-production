@@ -7,6 +7,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.output.MigrateResult;
@@ -49,7 +50,8 @@ class MigrationTests {
                 && !rawUrl.contains("placeholder");
         Assumptions.assumeTrue(hasUrl, "DATABASE_DIRECT_URL is not configured; skipping MigrationTests.");
 
-        String jdbcUrl = rawUrl.startsWith("jdbc:") ? rawUrl : "jdbc:" + rawUrl;
+        String nonNullRawUrl = Objects.requireNonNull(rawUrl);
+        String jdbcUrl = nonNullRawUrl.startsWith("jdbc:") ? nonNullRawUrl : "jdbc:" + nonNullRawUrl;
         String dbUser = System.getenv("DB_USER");
         String dbPass = System.getenv("DB_PASSWORD");
         String schema = "velan_mig_test_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12);
