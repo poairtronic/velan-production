@@ -1,27 +1,31 @@
 package com.velan.production.shared.security;
 
-import com.velan.production.shared.cache.CacheNames;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 /**
  * JDBC implementation of PermissionRepository reading users, role_permissions,
  * user_roles, user_permission_overrides, and user_sections.
+ * User-level rows (user_roles, overrides, active, user_sections) are never cached.
  */
 @Repository
 public class JdbcPermissionRepository implements PermissionRepository {
 
     private final JdbcTemplate jdbcTemplate;
+    private final RolePermissionGrantCache rolePermissionGrantCache;
 
-    public JdbcPermissionRepository(ObjectProvider<JdbcTemplate> jdbcTemplateProvider) {
+    public JdbcPermissionRepository(
+            ObjectProvider<JdbcTemplate> jdbcTemplateProvider,
+            RolePermissionGrantCache rolePermissionGrantCache) {
         this.jdbcTemplate = jdbcTemplateProvider.getIfAvailable();
+        this.rolePermissionGrantCache = rolePermissionGrantCache;
     }
 
     @Override
@@ -37,17 +41,19 @@ public class JdbcPermissionRepository implements PermissionRepository {
     }
 
     @Override
-    @Cacheable(cacheNames = CacheNames.ROLE_PERMISSIONS, key = "#userId")
     public Set<String> findRolePermissions(UUID userId) {
-        if (jdbcTemplate == null) {
+        if (jdbcTemplate == null || userId == null) {
             return Set.of();
         }
-        return new HashSet<>(jdbcTemplate.queryForList("""
-                SELECT DISTINCT rp.permission
-                FROM user_roles ur
-                JOIN role_permissions rp ON ur.role_id = rp.role_id
-                WHERE ur.user_id = ?
-                """, String.class, userId));
+        List<UUID> roleIds = jdbcTemplate.queryForList(
+                "SELECT role_id FROM user_roles WHERE user_id = ?",
+                UUID.class,
+                userId);
+        Set<String> permissions = new HashSet<>();
+        for (UUID roleId : roleIds) {
+            permissions.addAll(rolePermissionGrantCache.findPermissionsByRoleId(roleId));
+        }
+        return permissions;
     }
 
     @Override

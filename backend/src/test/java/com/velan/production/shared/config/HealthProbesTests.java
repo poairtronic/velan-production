@@ -23,8 +23,7 @@ class HealthProbesTests {
     void livenessIsUpWithoutDatabaseAndOnlyHealthIsExposed() throws Exception {
         try (ConfigurableApplicationContext ctx = new SpringApplicationBuilder(VelanProductionApplication.class)
                 .profiles("local")
-                .properties("server.port=0")
-                .run()) {
+                .run("--spring.profiles.active=local", "--server.port=0")) {
             int port = Integer.parseInt(ctx.getEnvironment().getProperty("local.server.port"));
             HttpResponse<String> liveness = http.send(
                     HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/actuator/health/liveness")).GET().build(),
@@ -41,9 +40,9 @@ class HealthProbesTests {
     void readinessIsDownWhenDatabaseIsUnreachable() throws Exception {
         try (ConfigurableApplicationContext ctx = new SpringApplicationBuilder(VelanProductionApplication.class)
                 .profiles("test")
-                .properties("server.port=0")
                 .run(
                         "--spring.profiles.active=test",
+                        "--server.port=0",
                         "--spring.datasource.url=jdbc:postgresql://127.0.0.1:59999/nonexistent",
                         "--spring.datasource.username=bad",
                         "--spring.datasource.password=bad",
@@ -66,12 +65,11 @@ class HealthProbesTests {
         try (ConfigurableApplicationContext ctx = new SpringApplicationBuilder(VelanProductionApplication.class)
                 .profiles("test")
                 .properties(
-                        "server.port=0",
                         "spring.datasource.url=" + cfg.jdbcUrl(),
                         "spring.datasource.username=" + cfg.username(),
                         "spring.datasource.password=" + cfg.password(),
                         "app.storage.type=disabled")
-                .run("--spring.autoconfigure.exclude=org.springframework.boot.flyway.autoconfigure.FlywayAutoConfiguration,org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration,org.springframework.boot.data.jpa.autoconfigure.DataJpaRepositoriesAutoConfiguration")) {
+                .run("--spring.profiles.active=test", "--server.port=0", "--spring.autoconfigure.exclude=org.springframework.boot.flyway.autoconfigure.FlywayAutoConfiguration,org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration,org.springframework.boot.data.jpa.autoconfigure.DataJpaRepositoriesAutoConfiguration")) {
             int port = Integer.parseInt(ctx.getEnvironment().getProperty("local.server.port"));
             HttpResponse<String> readiness = http.send(
                     HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/actuator/health/readiness")).GET().build(),

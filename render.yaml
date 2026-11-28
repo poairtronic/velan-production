@@ -6,7 +6,7 @@ services:
     dockerContext: ./backend
     region: singapore
     plan: starter
-    autoDeployTrigger: checksPass
+    autoDeployTrigger: off
     healthCheckPath: /actuator/health/liveness
     envVars:
       - key: SPRING_PROFILES_ACTIVE
