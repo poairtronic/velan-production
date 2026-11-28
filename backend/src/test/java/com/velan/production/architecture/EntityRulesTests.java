@@ -16,6 +16,7 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.web.bind.annotation.RestController;
+import jakarta.persistence.Entity;
 import jakarta.persistence.MappedSuperclass;
 import java.util.Set;
 
@@ -70,6 +71,11 @@ class EntityRulesTests {
         static final ArchRule mapped_superclasses_must_reside_in_shared = classes()
                         .that().areAnnotatedWith(MappedSuperclass.class)
                         .should().resideInAPackage("..shared.persistence..");
+
+        @ArchTest
+        static final ArchRule entities_must_reside_in_internal_domain = classes()
+                        .that().areAnnotatedWith(Entity.class)
+                        .should().resideInAPackage("..internal.domain..");
 
         @ArchTest
         static final ArchRule rest_controllers_must_reside_in_api_package = classes()

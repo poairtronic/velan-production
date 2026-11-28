@@ -35,8 +35,14 @@ management:
         include: health
   endpoint:
     health:
+      validate-group-membership: false
       probes:
         enabled: true
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState,db
 
 app:
   timezone: ${TZ:UTC}

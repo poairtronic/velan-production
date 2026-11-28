@@ -1,12 +1,10 @@
 package com.velan.production;
 
+import com.velan.production.shared.persistence.DatabaseTestSupport;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Objects;
-import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -27,36 +25,11 @@ public class NeonConnectivityTests {
     @Test
     @DisplayName("Verify Neon PostgreSQL Connectivity via SELECT 1")
     void testNeonConnectivity() {
-        String dbUrl = System.getenv("DATABASE_URL");
-        if (dbUrl == null || dbUrl.isBlank()) {
-            dbUrl = System.getProperty("DATABASE_URL");
-        }
-
-        boolean hasCredentials = dbUrl != null && !dbUrl.isBlank()
-                && !dbUrl.contains("USER:PASSWORD")
-                && !dbUrl.contains("placeholder")
-                && !dbUrl.contains("HOST");
-        Assumptions.assumeTrue(
-                hasCredentials,
-                "DATABASE_URL is not configured with live Neon credentials; skipping Neon connectivity test.");
-
-        // Normalize JDBC protocol prefix if necessary
-        String jdbcUrl = Objects.requireNonNull(dbUrl);
-        if (!jdbcUrl.startsWith("jdbc:")) {
-            jdbcUrl = "jdbc:" + jdbcUrl;
-        }
-
-        // Ensure SSL mode is enabled
-        if (!jdbcUrl.contains("sslmode=")) {
-            jdbcUrl = jdbcUrl.contains("?") ? jdbcUrl + "&sslmode=require" : jdbcUrl + "?sslmode=require";
-        }
+        var cfg = DatabaseTestSupport.requireDatabaseUrl();
+        String jdbcUrl = cfg.jdbcUrl();
 
         System.out.println("Attempting connection to Neon database...");
-        String dbUser = System.getenv("DB_USER");
-        String dbPass = System.getenv("DB_PASSWORD");
-        try (Connection conn = (dbUser != null && !dbUser.isBlank())
-                ? DriverManager.getConnection(jdbcUrl, dbUser, dbPass != null ? dbPass : "")
-                : DriverManager.getConnection(jdbcUrl);
+        try (Connection conn = DatabaseTestSupport.openConnection(cfg);
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery("SELECT 1")) {
 

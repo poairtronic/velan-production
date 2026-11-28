@@ -24,20 +24,15 @@ import com.velan.production.quality.internal.domain.MeasurementResult;
 import com.velan.production.quality.internal.domain.QcInspectionDecision;
 import com.velan.production.vendor.api.domain.VendorDcStatus;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.Statement;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import org.flywaydb.core.Flyway;
-import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -81,39 +76,18 @@ class EnumToDatabaseTests {
 
     @Test
     void allEnumsMatchDatabaseCheckConstraints() throws Exception {
-        String url = System.getenv("DATABASE_DIRECT_URL");
-        if (url == null || url.isBlank()) {
-            url = System.getenv("DATABASE_URL");
-        }
-        String user = System.getenv("DB_USER");
-        String pass = System.getenv("DB_PASSWORD");
-        Assumptions.assumeTrue(url != null && !url.isBlank(), "DATABASE_URL not set; skipping DB enum test");
-
-        String schema = "velan_enum_test_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12);
-        try (Connection conn = DriverManager.getConnection(url, user, pass);
-             Statement stmt = conn.createStatement()) {
-            stmt.execute("CREATE SCHEMA " + schema);
-            try {
-                Flyway.configure()
-                        .dataSource(url, user, pass)
-                        .schemas(schema)
-                        .locations("classpath:db/migration")
-                        .load()
-                        .migrate();
-
-                for (EnumCheckMapping m : MAPPINGS) {
-                    Set<String> dbValues = readAllowedValues(conn, schema, m.table(), m.column());
-                    assertFalse(dbValues.isEmpty(), "No CHECK IN values found for " + m.table() + "." + m.column());
-                    Set<String> enumValues = Arrays.stream(m.enumClass().getEnumConstants())
-                            .map(Enum::name)
-                            .collect(Collectors.toSet());
-                    assertEquals(dbValues, enumValues,
-                            "Mismatch for " + m.table() + "." + m.column() + " vs " + m.enumClass().getSimpleName());
-                }
-            } finally {
-                stmt.execute("DROP SCHEMA IF EXISTS " + schema + " CASCADE");
+        var cfg = DatabaseTestSupport.requireDirectOrPooledUrl();
+        DatabaseTestSupport.withMigratedSchema(cfg, "velan_enum_test", (conn, schema) -> {
+            for (EnumCheckMapping m : MAPPINGS) {
+                Set<String> dbValues = readAllowedValues(conn, schema, m.table(), m.column());
+                assertFalse(dbValues.isEmpty(), "No CHECK IN values found for " + m.table() + "." + m.column());
+                Set<String> enumValues = Arrays.stream(m.enumClass().getEnumConstants())
+                        .map(Enum::name)
+                        .collect(Collectors.toSet());
+                assertEquals(dbValues, enumValues,
+                        "Mismatch for " + m.table() + "." + m.column() + " vs " + m.enumClass().getSimpleName());
             }
-        }
+        });
     }
 
     private Set<String> readAllowedValues(Connection conn, String schema, String table, String column) throws Exception {

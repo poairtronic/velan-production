@@ -1,14 +1,13 @@
 package com.velan.production.shared.audit;
 
+import com.velan.production.shared.persistence.DatabaseTestSupport;
 import com.velan.production.shared.persistence.PageQuery;
 import java.time.Clock;
 import java.util.Map;
 import java.util.UUID;
-import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.transaction.support.TransactionTemplate;
 import tools.jackson.databind.ObjectMapper;
 
@@ -20,12 +19,8 @@ class AuditServiceIntegrationTests {
 
     @Test
     void recordAndQueryAndTransactionSemanticsWork() {
-        String url = System.getenv("DATABASE_URL");
-        String user = System.getenv("DB_USER");
-        String pass = System.getenv("DB_PASSWORD");
-        Assumptions.assumeTrue(url != null && !url.isBlank(), "DATABASE_URL not set; skipping audit integration test");
-
-        DriverManagerDataSource ds = new DriverManagerDataSource(url, user, pass);
+        var cfg = DatabaseTestSupport.requireDatabaseUrl();
+        javax.sql.DataSource ds = DatabaseTestSupport.openDataSource(cfg);
         JdbcTemplate jdbc = new JdbcTemplate(ds);
         DataSourceTransactionManager txManager = new DataSourceTransactionManager(ds);
         TransactionTemplate tx = new TransactionTemplate(txManager);

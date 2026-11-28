@@ -1,42 +1,35 @@
 # ==============================================================================
-# Velan Production — Backend Dockerfile (Local Development & Containerization)
-# Language: Java 25 LTS | Framework: Spring Boot 4.x | Build: Maven 3.9.9
+# Velan Production — Backend Dockerfile (Multi-Stage, Layered Spring Boot Jar)
 # ==============================================================================
 
-# Stage 1: Build stage with OpenJDK 25 compiler
 FROM eclipse-temurin:25-jdk-jammy AS builder
 WORKDIR /build
 
-# Copy Maven wrapper and POM to leverage Docker layer caching
 COPY .mvn/ .mvn/
 COPY mvnw pom.xml ./
 RUN chmod +x mvnw
-
-# Download dependencies offline
 RUN ./mvnw dependency:go-offline -B
 
-# Copy source code and build executable jar (skipping live DB tests)
 COPY src/ src/
-RUN ./mvnw package -DskipTests -B
+RUN ./mvnw package -DskipTests -B \
+    && java -Djarmode=tools -jar target/velan-production-backend-*.jar extract --layers --launcher --destination extracted
 
-# Stage 2: Minimal JRE 25 runtime container
 FROM eclipse-temurin:25-jre-jammy AS runtime
 WORKDIR /app
 
-# Create unprivileged system group and user
 RUN groupadd -r velan && useradd -r -g velan -d /app -s /sbin/nologin velan
 
-# Copy application artifact from builder stage
-COPY --from=builder /build/target/velan-production-backend-*.jar app.jar
-RUN chown -R velan:velan /app
+COPY --from=builder --chown=velan:velan /build/extracted/dependencies/ ./
+COPY --from=builder --chown=velan:velan /build/extracted/spring-boot-loader/ ./
+COPY --from=builder --chown=velan:velan /build/extracted/snapshot-dependencies/ ./
+COPY --from=builder --chown=velan:velan /build/extracted/application/ ./
 
 USER velan
 
 EXPOSE 8080
 
 ENV PORT=8080 \
-    SPRING_PROFILES_ACTIVE=local \
     TZ=UTC \
-    JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0"
+    JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75 -XX:+ExitOnOutOfMemoryError"
 
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
+ENTRYPOINT ["java", "org.springframework.boot.loader.launch.JarLauncher"]

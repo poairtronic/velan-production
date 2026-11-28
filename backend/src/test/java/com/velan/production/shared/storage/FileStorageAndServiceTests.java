@@ -3,17 +3,16 @@ package com.velan.production.shared.storage;
 import com.velan.production.VelanProductionApplication;
 import com.velan.production.shared.error.ServiceUnavailableException;
 import com.velan.production.shared.error.ValidationException;
+import com.velan.production.shared.persistence.DatabaseTestSupport;
 import java.io.ByteArrayInputStream;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.UUID;
-import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -88,12 +87,8 @@ class FileStorageAndServiceTests {
 
     @Test
     void dbUploadDownloadAndDeleteWork() throws Exception {
-        String url = System.getenv("DATABASE_URL");
-        String user = System.getenv("DB_USER");
-        String pass = System.getenv("DB_PASSWORD");
-        Assumptions.assumeTrue(url != null && !url.isBlank(), "DATABASE_URL not set; skipping file DB test");
-
-        JdbcTemplate jdbc = new JdbcTemplate(new DriverManagerDataSource(url, user, pass));
+        var cfg = DatabaseTestSupport.requireDatabaseUrl();
+        JdbcTemplate jdbc = DatabaseTestSupport.openJdbcTemplate(cfg);
         FileMetadataRepository repo = new FileMetadataRepository(new org.springframework.beans.factory.ObjectProvider<>() {
             @Override public JdbcTemplate getObject() { return jdbc; }
             @Override public JdbcTemplate getIfAvailable() { return jdbc; }

@@ -1,13 +1,12 @@
 package com.velan.production.shared.idempotency;
 
 import com.velan.production.shared.error.ConflictException;
+import com.velan.production.shared.persistence.DatabaseTestSupport;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.UUID;
-import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -17,13 +16,8 @@ class IdempotencyServiceTests {
 
     @Test
     void beginCompleteReplayAndConflictsWork() {
-        String url = System.getenv("DATABASE_URL");
-        String user = System.getenv("DB_USER");
-        String pass = System.getenv("DB_PASSWORD");
-        Assumptions.assumeTrue(url != null && !url.isBlank(), "DATABASE_URL not set; skipping idempotency test");
-
-        DriverManagerDataSource ds = new DriverManagerDataSource(url, user, pass);
-        JdbcTemplate jdbc = new JdbcTemplate(ds);
+        var cfg = DatabaseTestSupport.requireDatabaseUrl();
+        JdbcTemplate jdbc = DatabaseTestSupport.openJdbcTemplate(cfg);
         IdempotencyService service = new IdempotencyService(jdbc, new IdempotencyProperties(Duration.ofHours(24)));
 
         String key = "test-key-" + UUID.randomUUID();

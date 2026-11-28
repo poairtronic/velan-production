@@ -1,0 +1,94 @@
+services:
+  - type: web
+    name: velan-production-staging
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    region: singapore
+    plan: starter
+    autoDeployTrigger: checksPass
+    healthCheckPath: /actuator/health/liveness
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: staging
+      - key: PORT
+        sync: false
+      - key: TZ
+        sync: false
+      - key: LOG_LEVEL
+        sync: false
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_ACCESS_TTL
+        sync: false
+      - key: JWT_REFRESH_TTL
+        sync: false
+      - key: BCRYPT_STRENGTH
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_POOL_MAX_SIZE
+        sync: false
+      - key: DATABASE_DIRECT_URL
+        sync: false
+      - key: FLYWAY_USER
+        sync: false
+      - key: FLYWAY_PASSWORD
+        sync: false
+      - key: RM_SYNC_ENABLED
+        sync: false
+      - key: ECR_SEND_ENABLED
+        sync: false
+
+  - type: web
+    name: velan-production-prod
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    region: singapore
+    plan: starter
+    autoDeploy: false
+    healthCheckPath: /actuator/health/liveness
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: PORT
+        sync: false
+      - key: TZ
+        sync: false
+      - key: LOG_LEVEL
+        sync: false
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_ACCESS_TTL
+        sync: false
+      - key: JWT_REFRESH_TTL
+        sync: false
+      - key: BCRYPT_STRENGTH
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_POOL_MAX_SIZE
+        sync: false
+      - key: DATABASE_DIRECT_URL
+        sync: false
+      - key: FLYWAY_USER
+        sync: false
+      - key: FLYWAY_PASSWORD
+        sync: false
+      - key: RM_SYNC_ENABLED
+        sync: false
+      - key: ECR_SEND_ENABLED
+        sync: false

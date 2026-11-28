@@ -1,17 +1,14 @@
 package com.velan.production.shared.config;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
+import com.velan.production.shared.persistence.DatabaseTestSupport;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.output.MigrateResult;
-import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -40,57 +37,36 @@ class MigrationTests {
 
     @Test
     void flywayMigrationsApplyValidateAndEnforceConstraints() throws Exception {
-        String rawUrl = System.getenv("DATABASE_DIRECT_URL");
-        if (rawUrl == null || rawUrl.isBlank()) {
-            rawUrl = System.getProperty("DATABASE_DIRECT_URL");
-        }
-        boolean hasUrl = rawUrl != null && !rawUrl.isBlank()
-                && !rawUrl.contains("USER:PASSWORD")
-                && !rawUrl.contains("ep-xxx")
-                && !rawUrl.contains("placeholder");
-        Assumptions.assumeTrue(hasUrl, "DATABASE_DIRECT_URL is not configured; skipping MigrationTests.");
+        var cfg = DatabaseTestSupport.requireDirectOrPooledUrl();
+        DatabaseTestSupport.withIsolatedSchema(cfg, "velan_mig_test", (conn, schema) -> {
+            Flyway flyway = Flyway.configure()
+                    .dataSource(cfg.jdbcUrl(), cfg.username(), cfg.password())
+                    .schemas(schema)
+                    .locations("classpath:db/migration")
+                    .validateOnMigrate(true)
+                    .cleanDisabled(true)
+                    .baselineOnMigrate(false)
+                    .load();
 
-        String nonNullRawUrl = Objects.requireNonNull(rawUrl);
-        String jdbcUrl = nonNullRawUrl.startsWith("jdbc:") ? nonNullRawUrl : "jdbc:" + nonNullRawUrl;
-        String dbUser = System.getenv("DB_USER");
-        String dbPass = System.getenv("DB_PASSWORD");
-        String schema = "velan_mig_test_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12);
+            MigrateResult first = flyway.migrate();
+            assertEquals(17, first.migrationsExecuted, "Expected V001 through V017 migrations executed");
 
-        try (Connection conn = (dbUser != null && !dbUser.isBlank())
-                ? DriverManager.getConnection(jdbcUrl, dbUser, dbPass != null ? dbPass : "")
-                : DriverManager.getConnection(jdbcUrl)) {
-            try (Statement st = conn.createStatement()) {
-                st.execute("CREATE SCHEMA " + schema);
-            }
-            try {
-                Flyway flyway = Flyway.configure()
-                        .dataSource(jdbcUrl, dbUser, dbPass)
-                        .schemas(schema)
-                        .locations("classpath:db/migration")
-                        .validateOnMigrate(true)
-                        .cleanDisabled(true)
-                        .baselineOnMigrate(false)
-                        .load();
-
-                MigrateResult first = flyway.migrate();
-                assertEquals(17, first.migrationsExecuted, "Expected V001 through V017 migrations executed");
-
-                for (String table : EXPECTED_TABLES) {
-                    try (PreparedStatement ps = conn.prepareStatement(
-                            "SELECT 1 FROM information_schema.tables WHERE table_schema = ? AND table_name = ?")) {
-                        ps.setString(1, schema);
-                        ps.setString(2, table);
-                        try (ResultSet rs = ps.executeQuery()) {
-                            assertTrue(rs.next(), "Expected table " + table + " in schema " + schema);
-                        }
+            for (String table : EXPECTED_TABLES) {
+                try (PreparedStatement ps = conn.prepareStatement(
+                        "SELECT 1 FROM information_schema.tables WHERE table_schema = ? AND table_name = ?")) {
+                    ps.setString(1, schema);
+                    ps.setString(2, table);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        assertTrue(rs.next(), "Expected table " + table + " in schema " + schema);
                     }
                 }
+            }
 
-                MigrateResult second = flyway.migrate();
-                assertEquals(0, second.migrationsExecuted, "Second migrate must be a no-op");
-                flyway.validate();
+            MigrateResult second = flyway.migrate();
+            assertEquals(0, second.migrationsExecuted, "Second migrate must be a no-op");
+            flyway.validate();
 
-                try (Statement st = conn.createStatement()) {
+            try (Statement st = conn.createStatement()) {
                     st.execute("SET search_path TO " + schema);
 
                     UUID deptId = UUID.randomUUID();
@@ -516,11 +492,6 @@ class MigrationTests {
                         assertEquals("PURGED", rs.getString(1));
                     }
                 }
-            } finally {
-                try (Statement st = conn.createStatement()) {
-                    st.execute("DROP SCHEMA IF EXISTS " + schema + " CASCADE");
-                }
-            }
-        }
+        });
     }
 }

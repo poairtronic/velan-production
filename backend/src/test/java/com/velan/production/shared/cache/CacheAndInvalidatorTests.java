@@ -1,6 +1,7 @@
 package com.velan.production.shared.cache;
 
 import com.github.benmanes.caffeine.cache.Ticker;
+import com.velan.production.shared.persistence.DatabaseTestSupport;
 import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
@@ -8,7 +9,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.caffeine.CaffeineCache;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -88,10 +88,8 @@ class CacheAndInvalidatorTests {
 
     @Test
     void evictAfterCommitRespectsTransactionCommitAndRollback() {
-        String url = System.getenv("DATABASE_URL");
-        org.junit.jupiter.api.Assumptions.assumeTrue(url != null && !url.isBlank(), "DATABASE_URL not set");
-
-        DriverManagerDataSource ds = new DriverManagerDataSource(url, System.getenv("DB_USER"), System.getenv("DB_PASSWORD"));
+        var cfg = DatabaseTestSupport.requireDatabaseUrl();
+        javax.sql.DataSource ds = DatabaseTestSupport.openDataSource(cfg);
         TransactionTemplate tx = new TransactionTemplate(new DataSourceTransactionManager(ds));
 
         CacheProperties props = new CacheProperties(Duration.ofMinutes(10), 100, Map.of());

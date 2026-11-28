@@ -1,5 +1,6 @@
 package com.velan.production.shared.scheduling;
 
+import com.velan.production.shared.persistence.DatabaseTestSupport;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
@@ -7,12 +8,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import net.javacrumbs.shedlock.core.LockConfiguration;
 import net.javacrumbs.shedlock.core.LockProvider;
 import net.javacrumbs.shedlock.provider.jdbctemplate.JdbcTemplateLockProvider;
-import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.test.context.ActiveProfiles;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -33,13 +32,8 @@ class SchedulingAndShedLockTests {
 
     @Test
     void shedLockAllowsOnlyOneExecutionAcrossCompetingCallers() {
-        String url = System.getenv("DATABASE_URL");
-        String user = System.getenv("DB_USER");
-        String pass = System.getenv("DB_PASSWORD");
-        Assumptions.assumeTrue(url != null && !url.isBlank(), "DATABASE_URL not set; skipping ShedLock DB test");
-
-        DriverManagerDataSource ds = new DriverManagerDataSource(url, user, pass);
-        JdbcTemplate jdbc = new JdbcTemplate(ds);
+        var dbCfg = DatabaseTestSupport.requireDatabaseUrl();
+        JdbcTemplate jdbc = DatabaseTestSupport.openJdbcTemplate(dbCfg);
         LockProvider provider = new JdbcTemplateLockProvider(
                 JdbcTemplateLockProvider.Configuration.builder()
                         .withJdbcTemplate(jdbc)
