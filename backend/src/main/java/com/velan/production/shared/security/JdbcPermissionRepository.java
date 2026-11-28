@@ -1,11 +1,13 @@
 package com.velan.production.shared.security;
 
+import com.velan.production.shared.cache.CacheNames;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -35,6 +37,7 @@ public class JdbcPermissionRepository implements PermissionRepository {
     }
 
     @Override
+    @Cacheable(cacheNames = CacheNames.ROLE_PERMISSIONS, key = "#userId")
     public Set<String> findRolePermissions(UUID userId) {
         if (jdbcTemplate == null) {
             return Set.of();

@@ -23,6 +23,8 @@ app:
     require-jwt-secret: false
     jwt:
       secret: ${JWT_SECRET:REVWX09OTFlfSlVTVF9GT1JfTE9DQUxfVEVTVElOR18zMl9CWVRFUw==}
+  scheduling:
+    enabled: false
 
 logging:
   level:

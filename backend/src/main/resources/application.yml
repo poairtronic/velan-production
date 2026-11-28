@@ -44,6 +44,12 @@ app:
       refresh-ttl: ${JWT_REFRESH_TTL:PT12H}
     password:
       bcrypt-strength: ${BCRYPT_STRENGTH:12}
+  cache:
+    default-ttl: PT10M
+    default-max-size: 1000
+  scheduling:
+    enabled: ${SCHEDULING_ENABLED:true}
+    zone: ${SCHEDULING_ZONE:Asia/Kolkata}
 
 springdoc:
   api-docs:
