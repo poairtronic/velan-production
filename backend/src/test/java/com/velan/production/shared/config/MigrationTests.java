@@ -71,7 +71,7 @@ class MigrationTests {
                         .load();
 
                 MigrateResult first = flyway.migrate();
-                assertEquals(16, first.migrationsExecuted, "Expected V001 through V016 migrations executed");
+                assertEquals(17, first.migrationsExecuted, "Expected V001 through V017 migrations executed");
 
                 for (String table : EXPECTED_TABLES) {
                     try (PreparedStatement ps = conn.prepareStatement(
@@ -284,7 +284,7 @@ class MigrationTests {
                     UUID excId = UUID.randomUUID();
                     assertThrows(SQLException.class, () -> st.execute(
                             "INSERT INTO qc_exceptions (id, sc_id, piece_id, piece_operation_id, exception_type, reason, status, ecr_status, raised_by) "
-                            + "VALUES ('" + excId + "', '" + sc2Id + "', '" + piece1Id + "', '" + poId + "', 'QC_FAIL', 'bad', 'OPEN', 'PENDING', '" + userId + "')"));
+                            + "VALUES ('" + excId + "', '" + sc2Id + "', '" + piece1Id + "', '" + poId + "', 'QC_FAIL', 'bad', 'PENDING_PM_DISPOSITION', 'PENDING', '" + userId + "')"));
 
                     // 27. Duplicate replacement piece in piece_replacement_lineage rejected
                     UUID piece2Id = UUID.randomUUID();
@@ -294,7 +294,7 @@ class MigrationTests {
                     st.execute("INSERT INTO pieces (id, sc_id, sc_product_id, serial_number, status) "
                             + "VALUES ('" + piece3Id + "', '" + sc1Id + "', '" + scProdId + "', 'SN-003', 'CREATED')");
                     st.execute("INSERT INTO qc_exceptions (id, sc_id, piece_id, piece_operation_id, exception_type, reason, status, ecr_status, raised_by) "
-                            + "VALUES ('" + excId + "', '" + sc1Id + "', '" + piece1Id + "', '" + poId + "', 'QC_FAIL', 'bad', 'OPEN', 'PENDING', '" + userId + "')");
+                            + "VALUES ('" + excId + "', '" + sc1Id + "', '" + piece1Id + "', '" + poId + "', 'QC_FAIL', 'bad', 'PENDING_PM_DISPOSITION', 'PENDING', '" + userId + "')");
                     st.execute("INSERT INTO piece_replacement_lineage (id, sc_id, qc_exception_id, original_piece_id, replacement_piece_id, created_by) "
                             + "VALUES ('" + UUID.randomUUID() + "', '" + sc1Id + "', '" + excId + "', '" + piece1Id + "', '" + piece2Id + "', '" + userId + "')");
                     assertThrows(SQLException.class, () -> st.execute(
@@ -448,6 +448,70 @@ class MigrationTests {
                     try (ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM outbox_events WHERE sc_id = '" + sc1Id + "' AND event_type = 'STORAGE_DELETE'")) {
                         assertTrue(rs.next());
                         assertEquals(1, rs.getInt(1));
+                    }
+
+                    // 35. V017 Phase 2 status alignment rejections across all updated tables
+                    UUID scProd2Id = UUID.randomUUID();
+                    st.execute("INSERT INTO sc_products (id, sc_id, product_id, quantity) "
+                            + "VALUES ('" + scProd2Id + "', '" + sc2Id + "', '" + prodId + "', 2)");
+                    assertThrows(SQLException.class, () -> st.execute(
+                            "INSERT INTO sc_headers (id, sc_number, source, status, created_by) "
+                            + "VALUES ('" + UUID.randomUUID() + "', 'SC-BAD-1', 'MANUAL', 'DONE', '" + userId + "')"));
+                    assertThrows(SQLException.class, () -> st.execute(
+                            "INSERT INTO pieces (id, sc_id, sc_product_id, serial_number, status) "
+                            + "VALUES ('" + UUID.randomUUID() + "', '" + sc2Id + "', '" + scProd2Id + "', 'SN-BAD-1', 'UNKNOWN_STATUS')"));
+                    UUID pieceSc2Id = UUID.randomUUID();
+                    st.execute("INSERT INTO pieces (id, sc_id, sc_product_id, serial_number, status) "
+                            + "VALUES ('" + pieceSc2Id + "', '" + sc2Id + "', '" + scProd2Id + "', 'SN-SC2-1', 'IN_PRODUCTION_EXTRA_PROCESS')");
+                    UUID stepSc2Id = UUID.randomUUID();
+                    st.execute("INSERT INTO sc_product_template_steps (id, sc_id, sc_product_id, step_order, node_type) "
+                            + "VALUES ('" + stepSc2Id + "', '" + sc2Id + "', '" + scProd2Id + "', 1, 'DESIGN')");
+                    assertThrows(SQLException.class, () -> st.execute(
+                            "INSERT INTO piece_operations (id, sc_id, piece_id, snapshot_step_id, attempt_no, status) "
+                            + "VALUES ('" + UUID.randomUUID() + "', '" + sc2Id + "', '" + pieceSc2Id + "', '" + stepSc2Id + "', 1, 'INVALID_OP_STATUS')"));
+                    UUID poSc2Id = UUID.randomUUID();
+                    st.execute("INSERT INTO piece_operations (id, sc_id, piece_id, snapshot_step_id, attempt_no, status) "
+                            + "VALUES ('" + poSc2Id + "', '" + sc2Id + "', '" + pieceSc2Id + "', '" + stepSc2Id + "', 1, 'QC_IN_PROGRESS')");
+                    assertThrows(SQLException.class, () -> st.execute(
+                            "INSERT INTO qc_inspections (id, sc_id, piece_id, piece_operation_id, inspector_id, decision) "
+                            + "VALUES ('" + UUID.randomUUID() + "', '" + sc2Id + "', '" + pieceSc2Id + "', '" + poSc2Id + "', '" + userId + "', 'PASS')"));
+                    assertThrows(SQLException.class, () -> st.execute(
+                            "INSERT INTO qc_exceptions (id, sc_id, piece_id, piece_operation_id, exception_type, reason, status, ecr_status, raised_by) "
+                            + "VALUES ('" + UUID.randomUUID() + "', '" + sc2Id + "', '" + pieceSc2Id + "', '" + poSc2Id + "', 'QC_FAIL', 'bad', 'OPEN', 'PENDING', '" + userId + "')"));
+                    UUID excSc2Id = UUID.randomUUID();
+                    st.execute("INSERT INTO qc_exceptions (id, sc_id, piece_id, piece_operation_id, exception_type, reason, status, ecr_status, raised_by) "
+                            + "VALUES ('" + excSc2Id + "', '" + sc2Id + "', '" + pieceSc2Id + "', '" + poSc2Id + "', 'QC_FAIL', 'bad', 'PENDING_PM_DISPOSITION', 'PENDING', '" + userId + "')");
+                    assertThrows(SQLException.class, () -> st.execute(
+                            "INSERT INTO pm_dispositions (id, sc_id, qc_exception_id, piece_id, piece_operation_id, disposition, reason, decided_by) "
+                            + "VALUES ('" + UUID.randomUUID() + "', '" + sc2Id + "', '" + excSc2Id + "', '" + pieceSc2Id + "', '" + poSc2Id + "', 'RETURN', 'rework', '" + userId + "')"));
+                    st.execute("INSERT INTO pm_dispositions (id, sc_id, qc_exception_id, piece_id, piece_operation_id, disposition, reason, decided_by) "
+                            + "VALUES ('" + UUID.randomUUID() + "', '" + sc2Id + "', '" + excSc2Id + "', '" + pieceSc2Id + "', '" + poSc2Id + "', 'RETURN_TO_EARLIER_OPERATION', 'rework step 1', '" + userId + "')");
+                    assertThrows(SQLException.class, () -> st.execute(
+                            "INSERT INTO outbox_events (id, aggregate_type, aggregate_id, event_type, payload, status) "
+                            + "VALUES ('" + UUID.randomUUID() + "', 'QC_EXCEPTION', '" + excSc2Id + "', 'CREATED', '{}'::jsonb, 'SENT')"));
+
+                    // 36. SC cancellation constraints + cancel -> archive -> purge_sc lifecycle
+                    UUID scCancelId = UUID.randomUUID();
+                    st.execute("INSERT INTO sc_headers (id, sc_number, source, status, created_by) "
+                            + "VALUES ('" + scCancelId + "', 'SC-CANCEL-1', 'MANUAL', 'DRAFT_INTAKE', '" + userId + "')");
+                    assertThrows(SQLException.class, () -> st.execute(
+                            "UPDATE sc_headers SET status = 'CANCELLED', cancelled_by = '" + userId + "', cancelled_at = NOW() WHERE id = '" + scCancelId + "'"));
+                    assertThrows(SQLException.class, () -> st.execute(
+                            "UPDATE sc_headers SET status = 'CANCELLED', cancel_reason = 'Valid reason > 10 chars', cancelled_at = NOW() WHERE id = '" + scCancelId + "'"));
+                    assertThrows(SQLException.class, () -> st.execute(
+                            "UPDATE sc_headers SET status = 'CANCELLED', cancel_reason = 'Too short', cancelled_by = '" + userId + "', cancelled_at = NOW() WHERE id = '" + scCancelId + "'"));
+                    st.execute("UPDATE sc_headers SET status = 'CANCELLED', cancel_reason = 'Customer terminated order', cancelled_by = '" + userId + "', cancelled_at = NOW() WHERE id = '" + scCancelId + "'");
+                    st.execute("UPDATE sc_headers SET status = 'ARCHIVED' WHERE id = '" + scCancelId + "'");
+                    st.execute("INSERT INTO sc_archive_summary (id, sc_id, sc_number, status, excel_file_id, pdf_file_id, piece_count, operation_count, value_count, approved_by, approved_at) "
+                            + "VALUES ('" + UUID.randomUUID() + "', '" + scCancelId + "', 'SC-CANCEL-1', 'PURGE_APPROVED', '" + archiveExcelId + "', '" + archivePdfId + "', 0, 0, 0, '" + userId + "', NOW())");
+                    st.execute("SELECT * FROM purge_sc('" + scCancelId + "')");
+                    try (ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM sc_headers WHERE id = '" + scCancelId + "'")) {
+                        assertTrue(rs.next());
+                        assertEquals(0, rs.getInt(1));
+                    }
+                    try (ResultSet rs = st.executeQuery("SELECT status FROM sc_archive_summary WHERE sc_id = '" + scCancelId + "'")) {
+                        assertTrue(rs.next());
+                        assertEquals("PURGED", rs.getString(1));
                     }
                 }
             } finally {

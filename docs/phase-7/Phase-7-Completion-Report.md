@@ -1,12 +1,12 @@
 # Phase 7 Completion Report — Data Model, Flyway Migrations & Volume Validation
 
-**Date:** 2026-11-27  
+**Date:** 2026-11-28  
 **Branch:** `phase-7`  
-**Status:** **COMPLETE** (`V001`–`V016` applied on Neon `dev` branch; `CI on main` unverified until merged)
+**Status:** **COMPLETE** (`V001`–`V017` applied on Neon `dev` branch; ready for `main` merge)
 
 ---
 
-## 1. Per-Part Summary (7.1 – 7.8)
+## 1. Per-Part Summary (7.1 – 7.9)
 
 | Part | Summary |
 |---|---|
@@ -18,6 +18,7 @@
 | **7.6** | Added `V009` (`qcexception`), `V010` (`vendor` + `piece_operations.vendor_dc_tracker_id`), `V011` (`notification`), and `V012` (`integration`). |
 | **7.7** | Added `V013` (renamed 114 auto-generated constraints to `fk_`/`uq_`/`chk_`), `V014` (seeded 6 roles + 64 `role_permissions` + `7.7-permission-catalogue.md`), and `V015` (`purge_sc(uuid)` PL/pgSQL function). |
 | **7.8** | Added `V016` (renamed 11 inline `CHECK` constraints from `V009`–`V012`), standardized `SC = Size Card` across 37 docs, executed Scale B volume test in throwaway `velan_vol_test`, and compiled this report. |
+| **7.9** | Added `V017` (aligned `sc_headers`, `pieces`, `piece_operations`, `qc_inspections`, `qc_exceptions`, `pm_dispositions`, `outbox_events` with Phase 2 state machines; added SC cancellation columns and `chk_sc_headers_cancelled`), closed open items O-12, `qc_inspections` decision codes, and SC cancellation. |
 
 ---
 
@@ -27,7 +28,7 @@
 
 ---
 
-## 3. Migrations (`V001` – `V016`, All Applied on Neon `dev`)
+## 3. Migrations (`V001` – `V017`, All Applied on Neon `dev`)
 
 1. `V001__init_shared_kernel.sql` — `files`, `audit_logs`, `shedlock`, `idempotency_keys`
 2. `V002__create_iam_tables.sql` — `departments`, `sections`, `roles`, `role_permissions`, `users`, `user_roles`, `user_permission_overrides`, `user_sections`
@@ -45,6 +46,7 @@
 14. `V014__seed_roles_and_permissions.sql` — seeded 6 roles (`ADMIN`: 13, `PM`: 17, `DESIGNER`: 10, `OPERATOR`: 8, `QC`: 9, `MANAGEMENT`: 7; total 64 `role_permissions`)
 15. `V015__create_purge_sc_function.sql` — `PURGE_APPROVED` status + `purge_sc(p_sc_id uuid)`
 16. `V016__rename_v009_v012_check_constraints.sql` — renamed 11 inline `CHECK` constraints from `V009`–`V012`
+17. `V017__align_statuses_with_phase2.sql` — aligned `sc_headers`, `pieces`, `piece_operations`, `qc_inspections`, `qc_exceptions`, `pm_dispositions`, `outbox_events` with Phase 2 state machines; added `cancel_reason`, `cancelled_by`, `cancelled_at` + `chk_sc_headers_cancelled`
 
 ---
 
@@ -65,7 +67,7 @@
   - **Q3** (dynamic values + step params for 1 step): **0.134 ms** (target `< 100 ms`) — Bitmap Index Scan + Index Scan (**PASS**)
   - **Q4** (`pieces` by status per `sc_product`, 1 SC): **0.530 ms** (target `< 100 ms`) — Bitmap Index Scan (**PASS**)
   - **Q5** (`Packed` derivation for 1 SC): **0.256 ms** (target `< 500 ms`) — Nested Loop Anti Join + Index Only Scan (**PASS**)
-  - **Q6** (`piece_operations` by status across all SCs): **61.609 ms** (target `< 500 ms`) — Parallel Seq Scan on 216k rows (**PASS**)
+  - **Q6** (`piece_operations` by status across all SCs): **61.609 ms** (target `< 500 ms`) — Parallel Seq Scan on 216k rows (**PASS**; note: for 100 active Size Cards, Phase 39 may add a partial index on active `piece_operations (status)` if needed)
   - **Batch insert (200 `operator_values`):** **63 ms**
   - **`purge_sc` (1 max Size Card):** **3,776 ms (3.78 s)** (target `< 120 s`), 9 SCs untouched (**PASS**)
 
@@ -73,10 +75,9 @@
 
 ## 5. Deviations, UNVERIFIED & Open Items
 
-- **Deviations:** None.
-- **UNVERIFIED:** CI workflow run on `main` (`phase-7` not yet merged to `main`).
+- **Deviations:**
+  - `sc_headers.status` stores `DRAFT_INTAKE`, `ACTIVE`, `CANCELLED`, and `ARCHIVED`; `IN_PRODUCTION`, `PRODUCTION_COMPLETE`, `PARTIALLY_DELIVERED`, and `DELIVERED` are derived from child piece/delivery progress, and `PURGED` is recorded on `sc_archive_summary.status`.
+  - Owner decisions (7.9): (1) only Admin cancels a Size Card (`cancel_reason` $> 10$ chars); (2) Admin and PM manage templates, operations, parameters, and checklists while Designer only selects the template per product; (3) the 9 `"Permission-based"` Admin cells stay outside the `ADMIN` role by default and are granted via `user_permission_overrides`.
+- **UNVERIFIED:** CI workflow run on `main` (see §5 / merge status).
 - **Open Items:**
-  1. **O-12:** Who may edit process templates (`Admin` vs `PM`, `06_Role_Matrix.md`) and `Permission-based` Admin cells.
-  2. **`qc_inspections` decision codes:** Exact allowed verdict values (`VARCHAR(24)` until Phase 28).
-  3. **Size Card cancellation:** `01-sc-lifecycle-overview-and-states.md §5.7` (`CANCELLED` by `ROLE_ADMIN`) vs. `sc_headers.status CHECK ('ACTIVE', 'DONE', 'ARCHIVED', 'PURGED')`.
-  4. **ECR `scNumber` check:** Verify external ECR field mapping in Phase 14.
+  1. **ECR `scNumber` check:** Verify external ECR field mapping in Phase 14.
