@@ -68,5 +68,5 @@ class EntityRulesTests {
     static final ArchRule mapped_superclasses_must_reside_in_shared =
             classes()
                     .that().areAnnotatedWith(MappedSuperclass.class)
-                    .should().resideInAPackage("..shared..");
+                    .should().resideInAPackage("..shared.persistence..");
 }
