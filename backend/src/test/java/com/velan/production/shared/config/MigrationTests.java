@@ -20,7 +20,7 @@ class MigrationTests {
     private static final List<String> EXPECTED_TABLES = List.of(
             "files", "audit_logs", "shedlock", "idempotency_keys",
             "departments", "sections", "roles", "role_permissions", "users", "user_roles",
-            "user_permission_overrides", "user_sections",
+            "user_permission_overrides", "user_sections", "refresh_tokens",
             "parameters", "parameter_options", "checklists", "checklist_parameters",
             "operations", "operation_parameters", "operation_checklists",
             "process_templates", "products", "process_template_steps",
@@ -49,7 +49,7 @@ class MigrationTests {
                     .load();
 
             MigrateResult first = flyway.migrate();
-            assertEquals(17, first.migrationsExecuted, "Expected V001 through V017 migrations executed");
+            assertEquals(18, first.migrationsExecuted, "Expected V001 through V018 migrations executed");
 
             for (String table : EXPECTED_TABLES) {
                 try (PreparedStatement ps = conn.prepareStatement(
@@ -490,6 +490,88 @@ class MigrationTests {
                     try (ResultSet rs = st.executeQuery("SELECT status FROM sc_archive_summary WHERE sc_id = '" + scCancelId + "'")) {
                         assertTrue(rs.next());
                         assertEquals("PURGED", rs.getString(1));
+                    }
+
+                    // 37. V018 auth lockout, login format, refresh_tokens, and SYSTEM department
+                    try (ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM departments WHERE code = 'SYSTEM'")) {
+                        assertTrue(rs.next());
+                        assertEquals(1, rs.getInt(1), "SYSTEM department must be seeded once");
+                    }
+
+                    UUID v018UserId = UUID.randomUUID();
+                    st.execute("INSERT INTO users (id, name, login, password_hash, employee_id, department_id) "
+                            + "VALUES ('" + v018UserId + "', 'V18 User', 'v18.user_1', 'hash', 'EMP-V18-1', '" + deptId + "')");
+                    try (ResultSet rs = st.executeQuery(
+                            "SELECT failed_login_count, locked_until, must_change_password, password_changed_at "
+                            + "FROM users WHERE id = '" + v018UserId + "'")) {
+                        assertTrue(rs.next());
+                        assertEquals(0, rs.getInt("failed_login_count"));
+                        assertEquals(null, rs.getTimestamp("locked_until"));
+                        assertEquals(false, rs.getBoolean("must_change_password"));
+                        assertEquals(null, rs.getTimestamp("password_changed_at"));
+                    }
+
+                    // Negative failed_login_count rejected
+                    assertThrows(SQLException.class, () -> st.execute(
+                            "UPDATE users SET failed_login_count = -1 WHERE id = '" + v018UserId + "'"));
+
+                    // Bad login format rejected (too short or invalid characters)
+                    assertThrows(SQLException.class, () -> st.execute(
+                            "INSERT INTO users (id, name, login, password_hash, employee_id, department_id) "
+                            + "VALUES ('" + UUID.randomUUID() + "', 'Bad1', 'ab', 'hash', 'EMP-BAD-1', '" + deptId + "')"));
+                    assertThrows(SQLException.class, () -> st.execute(
+                            "INSERT INTO users (id, name, login, password_hash, employee_id, department_id) "
+                            + "VALUES ('" + UUID.randomUUID() + "', 'Bad2', 'bad login!', 'hash', 'EMP-BAD-2', '" + deptId + "')"));
+
+                    // refresh_tokens constraints
+                    UUID familyId = UUID.randomUUID();
+                    UUID rt1 = UUID.randomUUID();
+                    UUID rt2 = UUID.randomUUID();
+                    String hash1 = "a".repeat(64);
+                    String hash2 = "b".repeat(64);
+                    st.execute("INSERT INTO refresh_tokens (id, user_id, token_hash, family_id, issued_at, expires_at) "
+                            + "VALUES ('" + rt1 + "', '" + v018UserId + "', '" + hash1 + "', '" + familyId
+                            + "', NOW(), NOW() + INTERVAL '12 hours')");
+                    // Duplicate token_hash rejected
+                    assertThrows(SQLException.class, () -> st.execute(
+                            "INSERT INTO refresh_tokens (id, user_id, token_hash, family_id, issued_at, expires_at) "
+                            + "VALUES ('" + UUID.randomUUID() + "', '" + v018UserId + "', '" + hash1 + "', '" + familyId
+                            + "', NOW(), NOW() + INTERVAL '12 hours')"));
+                    // expires_at <= issued_at rejected
+                    assertThrows(SQLException.class, () -> st.execute(
+                            "INSERT INTO refresh_tokens (id, user_id, token_hash, family_id, issued_at, expires_at) "
+                            + "VALUES ('" + UUID.randomUUID() + "', '" + v018UserId + "', '" + "c".repeat(64) + "', '" + familyId
+                            + "', NOW(), NOW() - INTERVAL '1 minute')"));
+                    // Unknown user_id FK rejected
+                    assertThrows(SQLException.class, () -> st.execute(
+                            "INSERT INTO refresh_tokens (id, user_id, token_hash, family_id, issued_at, expires_at) "
+                            + "VALUES ('" + UUID.randomUUID() + "', '" + UUID.randomUUID() + "', '" + "d".repeat(64) + "', '" + familyId
+                            + "', NOW(), NOW() + INTERVAL '12 hours')"));
+                    // Unknown replaced_by self-FK rejected
+                    assertThrows(SQLException.class, () -> st.execute(
+                            "INSERT INTO refresh_tokens (id, user_id, token_hash, family_id, issued_at, expires_at, replaced_by) "
+                            + "VALUES ('" + UUID.randomUUID() + "', '" + v018UserId + "', '" + "e".repeat(64) + "', '" + familyId
+                            + "', NOW(), NOW() + INTERVAL '12 hours', '" + UUID.randomUUID() + "')"));
+                    // Valid replaced_by self-FK succeeds
+                    st.execute("INSERT INTO refresh_tokens (id, user_id, token_hash, family_id, issued_at, expires_at) "
+                            + "VALUES ('" + rt2 + "', '" + v018UserId + "', '" + hash2 + "', '" + familyId
+                            + "', NOW(), NOW() + INTERVAL '12 hours')");
+                    st.execute("UPDATE refresh_tokens SET revoked_at = NOW(), replaced_by = '" + rt2 + "' WHERE id = '" + rt1 + "'");
+
+                    // Verify refresh_tokens indexes exist
+                    for (String idx : List.of(
+                            "uq_refresh_tokens_token_hash",
+                            "idx_refresh_tokens_user_id",
+                            "idx_refresh_tokens_family_id",
+                            "idx_refresh_tokens_active_user")) {
+                        try (PreparedStatement ps = conn.prepareStatement(
+                                "SELECT 1 FROM pg_indexes WHERE schemaname = ? AND tablename = 'refresh_tokens' AND indexname = ?")) {
+                            ps.setString(1, schema);
+                            ps.setString(2, idx);
+                            try (ResultSet rs = ps.executeQuery()) {
+                                assertTrue(rs.next(), "Expected index " + idx + " on refresh_tokens");
+                            }
+                        }
                     }
                 }
         });

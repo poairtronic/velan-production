@@ -103,6 +103,25 @@ class SecurityFilterChainTests {
     }
 
     @Test
+    void principalReadsMustChangePasswordFromRepository() throws Exception {
+        UUID userId = UUID.randomUUID();
+        when(permissionRepository.isUserActive(userId)).thenReturn(true);
+        when(permissionRepository.mustChangePassword(userId)).thenReturn(true);
+        String token = jwtService.issueAccessToken(userId, "EMP004", List.of("OPERATOR"));
+
+        mockMvc.perform(get("/test-sec/must-change")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").value(true));
+
+        when(permissionRepository.mustChangePassword(userId)).thenReturn(false);
+        mockMvc.perform(get("/test-sec/must-change")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").value(false));
+    }
+
+    @Test
     void publicPathsRemainAccessibleWithoutToken() throws Exception {
         mockMvc.perform(get("/actuator/health/liveness")).andExpect(status().isOk());
         mockMvc.perform(get("/actuator/health/readiness")).andExpect(status().isOk());
@@ -118,6 +137,11 @@ class SecurityFilterChainTests {
         @PreAuthorize("@permissions.has('SC_VIEW')")
         public String protectedEndpoint() {
             return "ok";
+        }
+
+        @GetMapping("/test-sec/must-change")
+        public boolean mustChangeEndpoint(org.springframework.security.core.Authentication auth) {
+            return ((AuthenticatedUser) auth.getPrincipal()).mustChangePassword();
         }
 
         @PostMapping("/api/v1/auth/login")

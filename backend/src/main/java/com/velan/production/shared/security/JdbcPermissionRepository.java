@@ -41,6 +41,18 @@ public class JdbcPermissionRepository implements PermissionRepository {
     }
 
     @Override
+    public boolean mustChangePassword(UUID userId) {
+        if (jdbcTemplate == null || userId == null) {
+            return false;
+        }
+        Boolean flag = jdbcTemplate.query(
+                "SELECT must_change_password FROM users WHERE id = ?",
+                rs -> rs.next() ? rs.getBoolean(1) : Boolean.FALSE,
+                userId);
+        return Boolean.TRUE.equals(flag);
+    }
+
+    @Override
     public Set<String> findRolePermissions(UUID userId) {
         if (jdbcTemplate == null || userId == null) {
             return Set.of();

@@ -118,6 +118,7 @@ class PermissionAndSectionScopeTests {
                 ctx.refresh();
 
                 PermissionService permissionService = ctx.getBean(PermissionService.class);
+                JdbcPermissionRepository permRepo = ctx.getBean(JdbcPermissionRepository.class);
                 CacheInvalidator invalidator = ctx.getBean(CacheInvalidator.class);
                 CacheManager cacheManager = ctx.getBean(CacheManager.class);
 
@@ -129,6 +130,10 @@ class PermissionAndSectionScopeTests {
                 jdbc.update("INSERT INTO departments (id, code, name) VALUES (?, 'D-PERM', 'Perm Dept')", deptId);
                 jdbc.update("INSERT INTO users (id, name, login, password_hash, employee_id, department_id) VALUES (?, 'U1', 'permuser', 'h', 'EMP-P1', ?)", userId, deptId);
                 jdbc.update("INSERT INTO user_roles (id, user_id, role_id) VALUES (?, ?, ?)", UUID.randomUUID(), userId, roleA);
+
+                assertFalse(permRepo.mustChangePassword(userId));
+                jdbc.update("UPDATE users SET must_change_password = TRUE WHERE id = ?", userId);
+                assertTrue(permRepo.mustChangePassword(userId));
 
                 // ADMIN has RECORD_CANCEL_DELETE; OPERATOR does not, but has OPERATOR_MEASUREMENTS_WRITE
                 assertTrue(permissionService.hasPermission(userId, "RECORD_CANCEL_DELETE"));

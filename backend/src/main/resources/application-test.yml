@@ -25,6 +25,9 @@ app:
     require-jwt-secret: false
     jwt:
       secret: ${JWT_SECRET:REVWX09OTFlfSlVTVF9GT1JfTE9DQUxfVEVTVElOR18zMl9CWVRFUw==}
+  bootstrap:
+    admin:
+      must-change-password: ${BOOTSTRAP_ADMIN_MUST_CHANGE_PASSWORD:false}
   scheduling:
     enabled: false
 

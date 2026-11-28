@@ -54,6 +54,13 @@ app:
       refresh-ttl: ${JWT_REFRESH_TTL:PT12H}
     password:
       bcrypt-strength: ${BCRYPT_STRENGTH:12}
+  bootstrap:
+    admin:
+      login: ${BOOTSTRAP_ADMIN_LOGIN:}
+      password: ${BOOTSTRAP_ADMIN_PASSWORD:}
+      employee-id: ${BOOTSTRAP_ADMIN_EMPLOYEE_ID:}
+      name: ${BOOTSTRAP_ADMIN_NAME:}
+      must-change-password: ${BOOTSTRAP_ADMIN_MUST_CHANGE_PASSWORD:true}
   cache:
     default-ttl: PT10M
     default-max-size: 1000

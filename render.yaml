@@ -27,6 +27,16 @@ services:
         sync: false
       - key: BCRYPT_STRENGTH
         sync: false
+      - key: BOOTSTRAP_ADMIN_LOGIN
+        sync: false
+      - key: BOOTSTRAP_ADMIN_PASSWORD
+        sync: false
+      - key: BOOTSTRAP_ADMIN_EMPLOYEE_ID
+        sync: false
+      - key: BOOTSTRAP_ADMIN_NAME
+        sync: false
+      - key: BOOTSTRAP_ADMIN_MUST_CHANGE_PASSWORD
+        sync: false
       - key: DATABASE_URL
         sync: false
       - key: DB_USER
@@ -73,6 +83,16 @@ services:
       - key: JWT_REFRESH_TTL
         sync: false
       - key: BCRYPT_STRENGTH
+        sync: false
+      - key: BOOTSTRAP_ADMIN_LOGIN
+        sync: false
+      - key: BOOTSTRAP_ADMIN_PASSWORD
+        sync: false
+      - key: BOOTSTRAP_ADMIN_EMPLOYEE_ID
+        sync: false
+      - key: BOOTSTRAP_ADMIN_NAME
+        sync: false
+      - key: BOOTSTRAP_ADMIN_MUST_CHANGE_PASSWORD
         sync: false
       - key: DATABASE_URL
         sync: false

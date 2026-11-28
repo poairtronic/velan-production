@@ -116,7 +116,8 @@ public class SecurityConfig {
             List<SimpleGrantedAuthority> authorities = roles.stream()
                     .map(r -> new SimpleGrantedAuthority("ROLE_" + r))
                     .toList();
-            AuthenticatedUser principal = new AuthenticatedUser(userId, employeeCode, roles, false);
+            boolean mustChangePassword = permissionRepository.mustChangePassword(userId);
+            AuthenticatedUser principal = new AuthenticatedUser(userId, employeeCode, roles, mustChangePassword);
             return new UsernamePasswordAuthenticationToken(principal, jwt, authorities);
         };
     }

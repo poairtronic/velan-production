@@ -11,6 +11,10 @@ public interface PermissionRepository {
 
     boolean isUserActive(UUID userId);
 
+    default boolean mustChangePassword(UUID userId) {
+        return false;
+    }
+
     Set<String> findRolePermissions(UUID userId);
 
     /**
