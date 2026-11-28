@@ -1,5 +1,8 @@
 package com.velan.production.shared.security;
 
+import com.velan.production.shared.audit.AuditAction;
+import com.velan.production.shared.audit.AuditEvent;
+import com.velan.production.shared.audit.AuditService;
 import com.velan.production.shared.config.AppProperties;
 import com.velan.production.shared.error.CorrelationIdFilter;
 import com.velan.production.shared.error.ErrorCode;
@@ -13,6 +16,8 @@ import org.slf4j.MDC;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
@@ -42,7 +47,10 @@ public class SecurityConfig {
     public static final String[] PUBLIC_PATHS = {
             "/actuator/health/**",
             "/api/v1/auth/login",
-            "/api/v1/auth/refresh",
+            "/api/v1/auth/refresh"
+    };
+
+    public static final String[] LOCAL_OPENAPI_PATHS = {
             "/v3/api-docs/**",
             "/swagger-ui/**",
             "/swagger-ui.html"
@@ -64,15 +72,23 @@ public class SecurityConfig {
             JwtDecoder jwtDecoder,
             PermissionRepository permissionRepository,
             ObjectMapper objectMapper,
-            AppProperties appProperties) throws Exception {
+            AppProperties appProperties,
+            Environment environment,
+            AuditService auditService) throws Exception {
+
+        boolean isLocal = environment.acceptsProfiles(Profiles.of("local"));
 
         http
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource(appProperties)))
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(PUBLIC_PATHS).permitAll()
-                        .anyRequest().authenticated())
+                .authorizeHttpRequests(auth -> {
+                    auth.requestMatchers(PUBLIC_PATHS).permitAll();
+                    if (isLocal) {
+                        auth.requestMatchers(LOCAL_OPENAPI_PATHS).permitAll();
+                    }
+                    auth.anyRequest().authenticated();
+                })
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> jwt
                                 .decoder(jwtDecoder)
@@ -80,7 +96,7 @@ public class SecurityConfig {
                         .authenticationEntryPoint(authenticationEntryPoint(objectMapper)))
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(authenticationEntryPoint(objectMapper))
-                        .accessDeniedHandler(accessDeniedHandler(objectMapper)));
+                        .accessDeniedHandler(accessDeniedHandler(objectMapper, auditService)));
 
         return http.build();
     }
@@ -112,9 +128,18 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AccessDeniedHandler accessDeniedHandler(ObjectMapper objectMapper) {
-        return (request, response, accessDeniedException) ->
-                writeError(response, objectMapper, HttpStatus.FORBIDDEN, ErrorCode.ERR_FORBIDDEN, "Access denied");
+    public AccessDeniedHandler accessDeniedHandler(ObjectMapper objectMapper, AuditService auditService) {
+        return (request, response, accessDeniedException) -> {
+            auditService.recordIndependent(AuditEvent.of(
+                    AuditAction.ACCESS_DENIED,
+                    "ENDPOINT",
+                    request.getRequestURI(),
+                    null,
+                    null,
+                    java.util.Map.of("method", request.getMethod(), "path", request.getRequestURI()),
+                    null));
+            writeError(response, objectMapper, HttpStatus.FORBIDDEN, ErrorCode.ERR_FORBIDDEN, "Access denied");
+        };
     }
 
     private static void writeError(

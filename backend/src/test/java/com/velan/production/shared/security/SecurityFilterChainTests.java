@@ -108,6 +108,7 @@ class SecurityFilterChainTests {
         mockMvc.perform(get("/actuator/health/readiness")).andExpect(status().isOk());
         mockMvc.perform(post("/api/v1/auth/login")).andExpect(status().isOk());
         mockMvc.perform(post("/api/v1/auth/refresh")).andExpect(status().isOk());
+        mockMvc.perform(get("/v3/api-docs")).andExpect(status().isUnauthorized());
     }
 
     @RestController

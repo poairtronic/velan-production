@@ -60,7 +60,7 @@ class EntityRulesTests {
         @ArchTest
         static final ArchRule enums_must_reside_in_domain_package = classes()
                         .that().areEnums()
-                        .should().resideInAnyPackage("..domain..", "..shared.error..");
+                        .should().resideInAnyPackage("..domain..", "..shared.error..", "..shared.audit..");
 
         @ArchTest
         static final ArchRule mapped_superclasses_must_reside_in_shared = classes()
