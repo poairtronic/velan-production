@@ -22,7 +22,7 @@ import com.velan.production.qcexception.internal.domain.QcExceptionStatus;
 import com.velan.production.qcexception.internal.domain.QcExceptionType;
 import com.velan.production.quality.internal.domain.MeasurementResult;
 import com.velan.production.quality.internal.domain.QcInspectionDecision;
-import com.velan.production.vendor.internal.domain.VendorDcStatus;
+import com.velan.production.vendor.api.domain.VendorDcStatus;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;

@@ -64,14 +64,14 @@ All Docker containers deployed to Render Web Services must adhere to strict secu
 flowchart TD
     subgraph MultiStageBuild ["Multi-Stage Dockerfile Lifecycle"]
         subgraph Stage1 ["Stage 1: Build & Package Container"]
-            JDK_BUILD["Base: maven:3.9.9-eclipse-temurin-21-alpine<br/>Cached Maven Dependencies Layer (.m2)"]
+            JDK_BUILD["Base: eclipse-temurin:25-jdk-jammy + Maven Wrapper 3.9.9<br/>Cached Maven Dependencies Layer (.m2)"]
             SRC["Copy Clean Source (src/)"]
             COMPILE["Run: mvn clean package -DskipTests=true"]
             JAR["Produce: target/velan-production.jar"]
         end
 
         subgraph Stage2 ["Stage 2: Minimal Runtime Container"]
-            JRE_RUN["Base: eclipse-temurin:21-jre-alpine<br/>(Hardened Minimal OS)"]
+            JRE_RUN["Base: eclipse-temurin:25-jre-jammy<br/>(Hardened Minimal OS)"]
             NON_ROOT["Create Non-Root User:<br/>velanuser:velangroup (UID: 10001)"]
             COPY_JAR["Copy velan-production.jar from Stage 1"]
             ENTRYPOINT["ENTRYPOINT: java -XX:+UseZGC -XX:MaxRAMPercentage=75.0 -jar app.jar"]
@@ -92,10 +92,10 @@ flowchart TD
 #### 4.1 Base Image Standards
 1. **Multi-Stage Build Requirement:** Build tools (compilers, Maven caches, source code) are discarded in Stage 1. Only the compiled JAR is copied to Stage 2.
 2. **Hardened Minimal Base Images:**
-   - **Backend Runtime:** `eclipse-temurin:21-jre-alpine` (or Debian slim). Must not contain compilers, debugging shells, or unnecessary system utilities.
+   - **Backend Runtime:** `eclipse-temurin:25-jre-jammy`. Must not contain compilers, debugging shells, or unnecessary system utilities.
    - **Frontend Build:** `node:22-alpine` (or `node:24-alpine`).
 3. **Non-Root Execution:** The application container must never run as `root`. The Dockerfile must explicitly create a dedicated system user (e.g., `velanuser:10001`) and drop privileges prior to starting the JVM.
-4. **Pinned Image Digests:** Base image declarations in production Dockerfiles should reference immutable image digest SHAs (e.g., `eclipse-temurin:21-jre-alpine@sha256:...`) to prevent silent upstream image mutations.
+4. **Pinned Image Digests:** Base image declarations in production Dockerfiles should reference immutable image digest SHAs (e.g., `eclipse-temurin:25-jre-jammy@sha256:...`) to prevent silent upstream image mutations.
 
 ---
 

@@ -54,6 +54,11 @@ app:
   scheduling:
     enabled: ${SCHEDULING_ENABLED:true}
     zone: ${SCHEDULING_ZONE:Asia/Kolkata}
+  integration:
+    rm:
+      enabled: ${RM_SYNC_ENABLED:false}
+    ecr:
+      enabled: ${ECR_SEND_ENABLED:false}
 
 springdoc:
   api-docs:

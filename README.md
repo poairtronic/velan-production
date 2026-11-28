@@ -23,7 +23,7 @@ In accordance with Phase 3 specifications (`docs/phase-3/3.1-technology-stack/`)
 
 | Area | Approved Technology |
 |---|---|
-| **Backend Language & Runtime** | Java 21 (LTS) |
+| **Backend Language & Runtime** | Java 25 (LTS) |
 | **Backend Framework** | Spring Boot 3.4.x |
 | **Backend Build Tool** | Maven (via Maven Wrapper `mvnw`) |
 | **Frontend Framework** | React 19 |
@@ -47,7 +47,7 @@ The project is structured as a **single Git monorepo (`velan-production`)** cont
 ```text
 velan-production/
 │
-├── backend/              # Java 21 + Spring Boot 3.4.x backend application
+├── backend/              # Java 25 + Spring Boot backend application
 ├── frontend/             # React 19 + Vite 6 + TypeScript frontend application
 ├── docs/                 # Authoritative project requirements, design, and standards
 │   ├── phase-1/          # Requirements Analysis
@@ -66,7 +66,7 @@ velan-production/
 
 ### Independent Render Deployments
 Although co-located in one repository, the backend and frontend are **completely separate applications deployed independently on Render**:
-* **Backend Application:** Deployed to Render as a **Web Service**, running Java 21 / Spring Boot 3.4.x from the `backend/` directory.
+* **Backend Application:** Deployed to Render as a **Web Service**, running Java 25 LTS / Spring Boot 4.x from the `backend/` directory.
 * **Frontend Application:** Deployed to Render as a **Static Site**, serving production build assets (`dist/`) generated from the `frontend/` directory.
 * **API Communication:** The frontend communicates with the backend exclusively over HTTPS REST APIs (`/api/v1`) and Server-Sent Events (SSE).
 
@@ -122,7 +122,7 @@ From the repository root:
 
 ### Option B: Running Standalone (Without Docker)
 
-* **Backend (Spring Boot 3.4.x / Java 21):**
+* **Backend (Spring Boot 4.x / Java 25 LTS):**
   ```powershell
   cd backend
   .\mvnw.cmd spring-boot:run

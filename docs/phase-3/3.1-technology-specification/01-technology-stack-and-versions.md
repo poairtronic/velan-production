@@ -19,7 +19,7 @@ All versions listed below have been verified against official upstream package r
 
 | Technology / Library | Exact Version | Purpose & Manufacturing Role | Owning Module(s) | Official Verification Source | Verification Date |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Java Development Kit (JDK)** | `21.0.13.1+2` (LTS line 21) | Base runtime; virtual threads, records, pattern matching | All Backend | [Adoptium Temurin 21 Releases](https://adoptium.net/temurin/releases/?version=21) | 2026-11-26 |
+| **Java Development Kit (JDK)** | `25.0.5.1+2` (LTS line 25) | Base runtime; virtual threads, records, pattern matching | All Backend | [Adoptium Temurin 25 Releases](https://adoptium.net/temurin/releases/?version=25) | 2026-11-28 |
 | **Spring Boot Framework** | `3.4.3` (3.x line) / `4.0.3` (4.x line)* | Modular monolith container, security, data access, REST | All Backend | [Spring Boot Supported Versions](https://github.com/spring-projects/spring-boot/wiki/Supported-Versions) | 2026-11-26 |
 | **Spring Data JPA / Hibernate** | `6.6.x` (via Boot BOM) | Relational persistence, transactional bounds, `@Version` | `order`, `execution`, `quality` | [Maven Central: Hibernate Core](https://repo1.maven.org/maven2/org/hibernate/orm/hibernate-core/) | 2026-11-26 |
 | **Spring Security** | `6.4.x` / `6.5.x` (via Boot BOM) | RBAC authorization filter chain, password hashing | `security` | [Maven Central: Spring Security](https://repo1.maven.org/maven2/org/springframework/security/spring-security-core/) | 2026-11-26 |
@@ -93,7 +93,7 @@ According to the official [Spring Boot Supported Versions](https://github.com/sp
 
 #### 3.3 Recommendation to the Project Owner (Open Decision)
 * **Option A (Literal Phase 1 Baseline Conformance):** Adopt **Spring Boot 3.4.x** (or the latest 3.x patch release). Conforms strictly to the literal text "Spring Boot 3.x" in `13_Tech_Stack.md`, with the operational condition that 3.x has passed public community OSS support and would require either commercial Tanzu support or accepting unpatched upstream dependencies.
-* **Option B (Active Community OSS Support):** Adopt **Spring Boot 4.0.x** (or 4.1.x), which natively supports Java 21, Jakarta EE, and provides active public community security maintenance.
+* **Option B (Active Community OSS Support):** Adopt **Spring Boot 4.x**, which supports Java 25, Jakarta EE, and provides active public community security maintenance.
 * **Decision Status:** Preserved as **OPEN** for owner decision. The engineering team will not unilaterally decide.
 
 ---
@@ -113,8 +113,8 @@ According to the official [Spring Boot Supported Versions](https://github.com/sp
 ---
 
 ### 5. Technical Assumptions
-1. **ASSUMPTION:** Eclipse Temurin 21 JRE container image (`eclipse-temurin:21-jre-alpine` or Debian slim) will be supported on Render Docker environments.
-2. **ASSUMPTION:** Springdoc OpenAPI and Sentry Jakarta starters maintain zero namespace collisions when running on Java 21 with Spring Boot.
+1. **ASSUMPTION:** Eclipse Temurin 25 JRE container image (`eclipse-temurin:25-jre-jammy`) will be supported on Render Docker environments.
+2. **ASSUMPTION:** Springdoc OpenAPI and Sentry Jakarta starters maintain zero namespace collisions when running on Java 25 with Spring Boot.
 
 ---
 

@@ -105,7 +105,7 @@ Before introducing technical terminology, the physical life of an order proceeds
 | **Exceptions & Rework** | Quarantine locking, 4 PM dispositions, rework iteration increments, scrap replacement generation. | Financial responsibility assessment, customer penalty calculations, vendor defect chargebacks (**Owned by ECR**). |
 | **Vendor Processing** | Tracking vendor stages, reading RM Delivery Challans, tagging inward returns. | Vendor DC generation, commercial logistics contracts, vendor invoice approval (**Owned by RM**). |
 | **Logistics & Assembly** | BOM set pre-allocation, set completeness calculations, packing checklist, dock release gate pass. | Freight rate calculation, commercial invoicing, customer billing (**Strictly Outside Production**). |
-| **Architecture Stack** | Java 21, Spring Boot 3, React, TypeScript, Neon PostgreSQL, Cloudflare R2, Render. | **No Redis, No RabbitMQ, No Kafka, No Microservices.** |
+| **Architecture Stack** | Java 25 LTS, Spring Boot 4, React, TypeScript, Neon PostgreSQL, Cloudflare R2, Render. | **No Redis, No RabbitMQ, No Kafka, No Microservices.** |
 
 ---
 
@@ -725,7 +725,7 @@ The system architecture adheres strictly to approved technical constraints:
 | VELAN PRODUCTION RUNTIME STACK                                                                    |
 +---------------------------------------------------+-----------------------------------------------+
 | BACKEND CONTAINER (Render Web Service)            | FRONTEND STATIC SITE (Render Static CDN)      |
-| - Java 21 LTS                                     | - React 18+ (SPA)                             |
+| - Java 25 LTS                                     | - React 18+ (SPA)                             |
 | - Spring Boot 3.x                                 | - TypeScript                                  |
 | - Modular Monolith (Single JAR Artifact)          | - Vite (Fast Production Bundler)              |
 | - Maven Build Tool                                | - Tailwind CSS + shadcn/ui Component Library   |
@@ -744,7 +744,7 @@ The system architecture adheres strictly to approved technical constraints:
 ```
 
 ### 11.1 Approved Technology Specifications
-* **Programming Language:** Java 21 LTS (utilizing modern language features: Virtual Threads, Records, Pattern Matching, Sealed Interfaces).
+* **Programming Language:** Java 25 LTS (utilizing modern language features: Virtual Threads, Records, Pattern Matching, Sealed Interfaces).
 * **Backend Framework:** Spring Boot 3.x (Spring Data JPA, Spring Security, Spring Validation, Spring Mail).
 * **Build Tool:** Apache Maven.
 * **Frontend Framework:** React with TypeScript, bundled with Vite for near-instant HMR and optimized tree-shaken static assets.

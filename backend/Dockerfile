@@ -1,10 +1,10 @@
 # ==============================================================================
 # Velan Production — Backend Dockerfile (Local Development & Containerization)
-# Language: Java 21 LTS | Framework: Spring Boot 4.0.x | Build: Maven 3.9.9
+# Language: Java 25 LTS | Framework: Spring Boot 4.x | Build: Maven 3.9.9
 # ==============================================================================
 
-# Stage 1: Build stage with OpenJDK 21 compiler
-FROM eclipse-temurin:21-jdk-jammy AS builder
+# Stage 1: Build stage with OpenJDK 25 compiler
+FROM eclipse-temurin:25-jdk-jammy AS builder
 WORKDIR /build
 
 # Copy Maven wrapper and POM to leverage Docker layer caching
@@ -19,8 +19,8 @@ RUN ./mvnw dependency:go-offline -B
 COPY src/ src/
 RUN ./mvnw package -DskipTests -B
 
-# Stage 2: Minimal JRE 21 runtime container
-FROM eclipse-temurin:21-jre-jammy AS runtime
+# Stage 2: Minimal JRE 25 runtime container
+FROM eclipse-temurin:25-jre-jammy AS runtime
 WORKDIR /app
 
 # Create unprivileged system group and user

@@ -59,7 +59,7 @@ These come from the decision log and approved designs. Never break them, never "
 9. **QC on every operation.** A QC flag raises a non-blocking alert; the flagged piece waits; **only the PM decides**: CONTINUE (mandatory reason), EXTRA PROCESS, RETURN TO EARLIER OPERATION, REJECT AND RESTART. Reject and restart scraps the piece and creates a replacement that does not increase the ordered quantity and is blocked until released.
 10. **Vendor:** Production reads RM DC details and return status (received / partial / not received); no vendor dates; no vendor selection in Production; returned pieces may complete any pending operation, in-house operations stay sequential.
 11. **SC intake:** RM sync, manual entry and Excel import are all permanent and follow identical rules after creation.
-12. **Stack:** Java 21, Spring Boot, React + TypeScript, PostgreSQL on Neon, Cloudflare R2, Docker on Render, Caffeine cache (**no Redis**), database outbox (**no RabbitMQ or Kafka**), SSE for real-time, modular monolith (**no microservices**). Billing is outside Production.
+12. **Stack:** Java 25 LTS, Spring Boot, React + TypeScript, PostgreSQL on Neon, Cloudflare R2, Docker on Render, Caffeine cache (**no Redis**), database outbox (**no RabbitMQ or Kafka**), SSE for real-time, modular monolith (**no microservices**). Billing is outside Production.
 13. **Admin-only:** deletion or cancellation, and user notification settings.
 
 ---

@@ -1,4 +1,4 @@
-package com.velan.production.vendor.internal.domain;
+package com.velan.production.vendor.api.domain;
 
 public enum VendorDcStatus {
     RECEIVED,

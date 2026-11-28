@@ -7,7 +7,7 @@
 * **Hosting Platform:** Render cloud infrastructure for all compute services (`ADR-01, D-13`).
 * **Deployment Decoupling:** Frontend and Backend are deployed independently (`D-13`):
   - Frontend: Render Static Site (served via Render Global CDN).
-  - Backend: Render Web Service (Docker container running Spring Boot on Java 21).
+  - Backend: Render Web Service (Docker container running Spring Boot on Java 25 LTS).
 * **Managed Database:** PostgreSQL on Neon serverless architecture (`ADR-08`).
 * **Binary Object Store:** Cloudflare R2 (S3-compatible) with pre-signed URLs (`ADR-05`).
 * **Connection Invariant:** Schema migrations (Flyway) must execute against **direct unpooled database endpoints**; application runtime traffic routes through **pooled endpoints** (`ADR-08`).
@@ -30,7 +30,7 @@ flowchart TD
         end
 
         subgraph ComputeService ["Backend Docker Web Service"]
-            BE_PROD["velan-production-backend (Docker Web Service)<br/>Java 21 + Spring Boot (Port 8080)<br/>Health: /actuator/health"]
+            BE_PROD["velan-production-backend (Docker Web Service)<br/>Java 25 LTS + Spring Boot (Port 8080)<br/>Health: /actuator/health"]
         end
     end
 
