@@ -8,6 +8,7 @@ spring:
       maximum-pool-size: ${DB_POOL_MAX_SIZE:5}
       minimum-idle: 1
       connection-timeout: 30000
+      validation-timeout: 5000
       idle-timeout: 300000
       keepalive-time: 0
   flyway:

@@ -11,6 +11,7 @@ import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.ConditionEvents;
 import com.tngtech.archunit.lang.SimpleConditionEvent;
 
+import jakarta.persistence.MappedSuperclass;
 import java.util.Set;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
@@ -56,4 +57,16 @@ class EntityRulesTests {
                             }
                         }
                     });
+
+    @ArchTest
+    static final ArchRule enums_must_reside_in_domain_package =
+            classes()
+                    .that().areEnums()
+                    .should().resideInAPackage("..domain..");
+
+    @ArchTest
+    static final ArchRule mapped_superclasses_must_reside_in_shared =
+            classes()
+                    .that().areAnnotatedWith(MappedSuperclass.class)
+                    .should().resideInAPackage("..shared..");
 }
