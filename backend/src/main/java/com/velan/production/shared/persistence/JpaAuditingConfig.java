@@ -1,23 +1,25 @@
 package com.velan.production.shared.persistence;
 
+import jakarta.persistence.EntityManagerFactory;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
+import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.data.auditing.DateTimeProvider;
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
 /**
- * Enables JPA auditing with UTC timestamps and current-user resolution
- * whenever a datasource URL is configured.
+ * Auto-configuration enabling JPA auditing with UTC timestamps and current-user resolution
+ * whenever HibernateJpaAutoConfiguration has created an EntityManagerFactory.
  * Security principal wiring will be supplied in Part 8.5.
  */
-@Configuration
-@ConditionalOnExpression("'${spring.autoconfigure.exclude[0]:}' == ''")
+@AutoConfiguration(after = HibernateJpaAutoConfiguration.class)
+@ConditionalOnBean(EntityManagerFactory.class)
 @EnableJpaAuditing(dateTimeProviderRef = "utcDateTimeProvider")
 public class JpaAuditingConfig {
 

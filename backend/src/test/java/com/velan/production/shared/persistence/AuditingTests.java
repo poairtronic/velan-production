@@ -85,7 +85,6 @@ class AuditingTests {
     @EnableAutoConfiguration
     @EntityScan(basePackageClasses = TestAuditedItem.class)
     @EnableJpaRepositories(basePackageClasses = TestAuditedItemRepository.class, considerNestedRepositories = true)
-    @Import(JpaAuditingConfig.class)
     static class TestAuditApp {
     }
 

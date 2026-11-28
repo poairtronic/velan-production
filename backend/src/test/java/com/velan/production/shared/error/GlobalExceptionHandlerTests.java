@@ -1,5 +1,8 @@
 package com.velan.production.shared.error;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import com.velan.production.shared.api.ApiPaths;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -9,6 +12,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.system.CapturedOutput;
@@ -165,6 +169,25 @@ class GlobalExceptionHandlerTests {
                 .andExpect(header().exists(CorrelationIdFilter.HEADER_NAME));
 
         assertFalse(output.getOut().contains("SECRET_TOKEN_VALUE"), "Authorization header must never be logged");
+    }
+
+    @Test
+    void accessLogCarriesCorrelationIdInMdc() throws Exception {
+        Logger accessLogger = (Logger) LoggerFactory.getLogger("ACCESS_LOG");
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        accessLogger.addAppender(appender);
+        try {
+            String cid = UUID.randomUUID().toString();
+            mockMvc.perform(get("/test-errors/ok").header(CorrelationIdFilter.HEADER_NAME, cid))
+                    .andExpect(status().isOk());
+
+            boolean found = appender.list.stream()
+                    .anyMatch(e -> cid.equals(e.getMDCPropertyMap().get(CorrelationIdFilter.MDC_KEY)));
+            org.junit.jupiter.api.Assertions.assertTrue(found, "ACCESS_LOG event must carry correlationId in MDC");
+        } finally {
+            accessLogger.detachAppender(appender);
+        }
     }
 
     @Test
