@@ -32,3 +32,9 @@ app:
 logging:
   level:
     com.velan.production: ${LOG_LEVEL:DEBUG}
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true

@@ -1,0 +1,27 @@
+# Test profile configuration (safe defaults for unit/context tests without live DB)
+spring:
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration
+      - org.springframework.boot.flyway.autoconfigure.FlywayAutoConfiguration
+  flyway:
+    enabled: false
+
+app:
+  database:
+    url: ${DATABASE_URL:}
+    direct-url: ${DATABASE_DIRECT_URL:}
+    username: ${DB_USER:}
+    password: ${DB_PASSWORD:}
+    require-database-config: false
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
+    require-cors-origins: false
+  security:
+    jwt-secret: ${JWT_SECRET:}
+    jwt-expiration-minutes: ${JWT_EXPIRATION_MINUTES:60}
+    require-jwt-secret: false
+
+logging:
+  level:
+    com.velan.production: ${LOG_LEVEL:INFO}
